@@ -3,68 +3,506 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Controle de Café</title>
+    <title>Controle de Café - Logística</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 2px solid #ff9800; position: relative; }
-        
-        h1 { color: #ff9800; }
-        #clock { font-size: 3em; font-weight: bold; margin-bottom: 20px; color: #00e676; }
-        
-        /* Botões */
-        .botoes-topo { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
-        .btn-editar, .btn-teste { color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-editar { background: #444; }
-        .btn-editar:hover { background: #ff9800; color: #121212; }
-        .btn-teste { background: #d32f2f; }
-        .btn-teste:hover { background: #b71c1c; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(30, 30, 46, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #ff9800;
+            box-shadow: 0 8px 32px rgba(255, 152, 0, 0.2);
+            position: relative;
+        }
+
+        h1 {
+            color: #ff9800;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #bbb;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        #clock {
+            font-size: 3.5em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #00e676;
+            text-shadow: 0 0 20px rgba(0, 230, 118, 0.5);
+            font-family: 'Courier New', monospace;
+        }
 
         /* Tela Inicial */
-        #tela-inicial { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 60vh; }
-        .btn-iniciar-gigante { background: #00e676; color: #121212; font-size: 2em; font-weight: bold; padding: 25px 50px; border: none; border-radius: 15px; cursor: pointer; animation: pulse 1.5s infinite; text-transform: uppercase; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #tela-inicial {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+            gap: 30px;
+        }
 
-        #painel-principal { display: none; }
+        .btn-iniciar-gigante {
+            background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+            color: #121212;
+            font-size: 1.8em;
+            font-weight: bold;
+            padding: 30px 60px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+            text-transform: uppercase;
+            box-shadow: 0 8px 25px rgba(0, 230, 118, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-iniciar-gigante:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 230, 118, 0.6);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        #painel-principal {
+            display: none;
+        }
+
+        /* Botões Topo */
+        .botoes-topo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-editar, .btn-teste {
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .btn-editar {
+            background: linear-gradient(135deg, #4a4a6a 0%, #2a2a4a 100%);
+            border: 1px solid #666;
+        }
+
+        .btn-editar:hover {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: #121212;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-teste {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            border: 1px solid #ff6b6b;
+        }
+
+        .btn-teste:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 82, 82, 0.3);
+        }
 
         /* Mascote */
-        .mascote-container { height: 150px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
-        .boneco { font-size: 80px; transition: transform 0.3s; animation: swing 2s infinite ease-in-out; }
-        @keyframes swing { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
-        .alert-mode { animation: flash-red 0.5s infinite; color: #f44336; }
-        @keyframes flash-red { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(255, 0, 0, 0.3); } }
+        .mascote-container {
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .boneco {
+            font-size: 120px;
+            transition: transform 0.3s ease;
+            animation: swing 2s infinite ease-in-out;
+            filter: drop-shadow(0 0 20px rgba(255, 152, 0, 0.3));
+        }
+
+        @keyframes swing {
+            0%, 100% { transform: rotate(-8deg) scale(1); }
+            50% { transform: rotate(8deg) scale(1.05); }
+        }
+
+        .alert-mode {
+            animation: flash-alert 0.4s infinite !important;
+            color: #ff5252;
+        }
+
+        @keyframes flash-alert {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(-5deg); }
+        }
 
         /* Painel Status */
-        .status-card { background: #333; padding: 20px; border-radius: 10px; min-height: 150px; border-left: 10px solid #ff9800; }
-        .nomes { font-size: 1.6em; color: #ffeb3b; font-weight: 900; text-transform: uppercase; margin-top: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
-        .aviso { font-size: 2.2em; color: #f44336; font-weight: bold; display: none; margin-top: 15px; text-transform: uppercase; }
-        
+        .status-card {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(0, 230, 118, 0.1) 100%);
+            padding: 30px;
+            border-radius: 15px;
+            min-height: 180px;
+            border: 2px solid rgba(255, 152, 0, 0.3);
+            margin: 20px 0;
+            box-shadow: inset 0 0 20px rgba(255, 152, 0, 0.05);
+        }
+
+        #status-label {
+            color: #aaa;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nomes {
+            font-size: 1.8em;
+            color: #ffeb3b;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin: 15px 0;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .aviso {
+            font-size: 2.5em;
+            color: #ff5252;
+            font-weight: bold;
+            display: none;
+            margin-top: 20px;
+            text-transform: uppercase;
+            animation: pulse-aviso 0.6s infinite;
+            text-shadow: 0 0 20px rgba(255, 82, 82, 0.5);
+        }
+
+        @keyframes pulse-aviso {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
         /* Tabela */
-        .tabela-grupos { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 1em; }
-        .tabela-grupos th, .tabela-grupos td { border-bottom: 1px solid #444; padding: 12px; text-align: left; }
-        .active-row { background-color: #388e3c !important; border-left: 5px solid #00e676; }
-        .nome-tabela { color: #ffeb3b; font-weight: bold; }
+        .tabela-container {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .tabela-grupos {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1em;
+        }
+
+        .tabela-grupos th {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: #121212;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tabela-grupos td {
+            border-bottom: 1px solid rgba(255, 152, 0, 0.2);
+            padding: 15px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .tabela-grupos tbody tr {
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .tabela-grupos tbody tr:hover {
+            background: rgba(255, 152, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .active-row {
+            background: linear-gradient(90deg, rgba(0, 230, 118, 0.2) 0%, rgba(0, 200, 100, 0.1) 100%) !important;
+            border-left: 5px solid #00e676;
+            box-shadow: inset 0 0 15px rgba(0, 230, 118, 0.1);
+        }
+
+        .nome-tabela {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
 
         /* Modal Edição */
-        #modal-edicao { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 2px solid #ff9800; width: 90%; max-width: 600px; text-align: left; max-height: 80vh; overflow-y: auto; }
-        .input-group { margin-bottom: 15px; }
-        .input-group input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; }
-        .btn-salvar { width: 100%; background: #00e676; color: #121212; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #modal-edicao {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e1e2e 0%, #16213e 100%);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #ff9800;
+            width: 90%;
+            max-width: 700px;
+            text-align: left;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(255, 152, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 152, 0, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #ff9800;
+            font-size: 1.8em;
+        }
+
+        .btn-fechar {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-fechar:hover {
+            background: #ff5252;
+            transform: rotate(90deg);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #ff9800;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 152, 0, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #ff9800;
+            background: rgba(255, 152, 0, 0.1);
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
+        }
+
+        .btn-salvar {
+            width: 100%;
+            background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+            color: #121212;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px 20px rgba(0, 230, 118, 0.3);
+        }
+
+        .btn-salvar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 230, 118, 0.5);
+        }
+
+        .btn-salvar:active {
+            transform: translateY(0);
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            #clock {
+                font-size: 2.5em;
+            }
+
+            .botoes-topo {
+                position: static;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+
+            .btn-editar, .btn-teste {
+                padding: 10px 15px;
+                font-size: 0.85em;
+            }
+
+            .boneco {
+                font-size: 80px;
+            }
+
+            .nomes {
+                font-size: 1.4em;
+            }
+
+            .aviso {
+                font-size: 1.8em;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 25px;
+            }
+
+            .tabela-grupos th, .tabela-grupos td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+
+        /* Notificação de Sucesso */
+        .notificacao {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00e676 0%, #00c853 100%);
+            color: #121212;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 2000;
+            animation: slideInRight 0.5s ease;
+            box-shadow: 0 5px 20px rgba(0, 230, 118, 0.4);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .info-box {
+            background: rgba(0, 230, 118, 0.1);
+            border-left: 4px solid #00e676;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #bbb;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
 
 <div class="container" id="tela-inicial">
-    <h1>Controle de Pausas - Setor Logística</h1>
-    <button class="btn-iniciar-gigante" onclick="iniciarPainel()">🚀 Ativar Sistema de Áudio</button>
+    <h1>☕ Controle de Pausas - Café</h1>
+    <p class="subtitle">Sistema de Logística - Madrugada</p>
+    <button class="btn-iniciar-gigante" onclick="iniciarPainel()">🚀 Ativar Sistema</button>
+    <div class="info-box">
+        ℹ️ Clique para iniciar o monitoramento de pausas para café dos colaboradores
+    </div>
 </div>
 
 <div class="container" id="painel-principal">
     <div class="botoes-topo">
-        <button class="btn-teste" onclick="testarTransicão()">🚨 TESTAR ALARME E VOZ</button>
+        <button class="btn-teste" onclick="testarTransicão()">🚨 Testar Alarme</button>
         <button class="btn-editar" onclick="abrirModal()">⚙️ Editar Equipes</button>
     </div>
-    
+
     <h1>Controle de Café - Madrugada</h1>
     <div id="clock">00:00:00</div>
 
@@ -73,132 +511,227 @@
     </div>
 
     <div class="status-card" id="card-principal">
-        <div id="status-label" style="color: #bbb;">Status Atual:</div>
+        <div id="status-label">Status Atual:</div>
         <div id="grupo-nome" class="nomes">Sistema Pronto</div>
         <div id="alerta-saida" class="aviso">⚠️ TEMPO ESGOTADO! RETIRE-SE! ⚠️</div>
     </div>
 
-    <table class="tabela-grupos">
-        <thead>
-            <tr><th style="width: 20%;">Horário</th><th>Equipe</th></tr>
-        </thead>
-        <tbody id="lista-corpo"></tbody>
-    </table>
+    <div class="tabela-container">
+        <table class="tabela-grupos">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Horário</th>
+                    <th>Equipe</th>
+                </tr>
+            </thead>
+            <tbody id="lista-corpo"></tbody>
+        </table>
+    </div>
 </div>
 
 <div id="modal-edicao">
     <div class="modal-content">
-        <button style="float:right;" onclick="fecharModal()">X</button>
-        <h2>Editar Equipes</h2>
+        <div class="modal-header">
+            <h2>✏️ Editar Equipes</h2>
+            <button class="btn-fechar" onclick="fecharModal()">✕</button>
+        </div>
+        <div class="info-box">
+            💡 Modifique os nomes das equipes abaixo. As alterações serão salvas automaticamente.
+        </div>
         <div id="form-edicao"></div>
-        <button class="btn-salvar" onclick="salvarEdicao()">💾 Salvar</button>
+        <button class="btn-salvar" onclick="salvarEdicao()">💾 Salvar Alterações</button>
     </div>
 </div>
 
-<script>
-    let grupos = [
-        { hora: "02:00", nomes: "Kesia, Juliane, Yasmim, Natalia e Karen" },
-        { hora: "02:10", nomes: "Juliana, Angelica, Maria Eduarda, Deborah, Diego" },
-        { hora: "02:20", nomes: "Bruno, Maria Da Guia, Ana Paula, Darlan" },
-        { hora: "02:30", nomes: "Guilherme, Giovanna, Michely, Willian Bento" },
-        { hora: "02:40", nomes: "Willian, Dayna, Maria Luiza, Andressa, Rodrigo Melo" },
-        { hora: "02:50", nomes: "Luciene, Erika, Denise, Jessica" },
-        { hora: "03:00", nomes: "Giselle, Leila, Marcos Felipe, Paulo Vitor, Ana, Lorraine" },
-        { hora: "03:10", nomes: "Brandon, Ezequiel, Nicson" },
-        { hora: "03:20", nomes: "Bruno Coelho, Bruno Lorran" },
-        { hora: "03:30", nomes: "Luan, Luca, Geovana" }
-    ];
+<!-- Elemento de Áudio Oculto -->
+<audio id="audioAlerta" preload="auto">
+    <source src="data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==" type="audio/wav">
+</audio>
 
+<script>
+    // ============ DADOS E ESTADO ============
+    let grupos = [];
     let emModoTeste = false;
     let audioCtx;
     let ultimaFala = "";
 
-    // FUNÇÃO 1: SIRENE ESTRONDOSA (LOGÍSTICA)
-    function tocarSirene() {
-        if (!audioCtx) return;
-        const osc1 = audioCtx.createOscillator();
-        const osc2 = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-
-        osc1.type = 'sawtooth'; // Som mais agressivo
-        osc2.type = 'square';
-        
-        // Efeito Bitonal (Sirene)
-        const tempo = audioCtx.currentTime;
-        osc1.frequency.setValueAtTime(440, tempo);
-        osc1.frequency.exponentialRampToValueAtTime(880, tempo + 0.5);
-        osc2.frequency.setValueAtTime(880, tempo);
-        osc2.frequency.exponentialRampToValueAtTime(440, tempo + 0.5);
-
-        gain.gain.setValueAtTime(0.2, tempo);
-        gain.gain.exponentialRampToValueAtTime(0.01, tempo + 1);
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc1.start(); osc2.start();
-        osc1.stop(tempo + 1); osc2.stop(tempo + 1);
+    // ============ INICIALIZAÇÃO ============
+    function carregarDados() {
+        const dadosSalvos = localStorage.getItem('gruposCafe');
+        if (dadosSalvos) {
+            grupos = JSON.parse(dadosSalvos);
+        } else {
+            grupos = [
+                { hora: "02:00", nomes: "Kesia, Juliane, Yasmim, Natalia e Karen" },
+                { hora: "02:10", nomes: "Juliana, Angelica, Maria Eduarda, Deborah, Diego" },
+                { hora: "02:20", nomes: "Bruno, Maria Da Guia, Ana Paula, Darlan" },
+                { hora: "02:30", nomes: "Guilherme, Giovanna, Michely, Willian Bento" },
+                { hora: "02:40", nomes: "Willian, Dayna, Maria Luiza, Andressa, Rodrigo Melo" },
+                { hora: "02:50", nomes: "Luciene, Erika, Denise, Jessica" },
+                { hora: "03:00", nomes: "Giselle, Leila, Marcos Felipe, Paulo Vitor, Ana, Lorraine" },
+                { hora: "03:10", nomes: "Brandon, Ezequiel, Nicson" },
+                { hora: "03:20", nomes: "Bruno Coelho, Bruno Lorran" },
+                { hora: "03:30", nomes: "Luan, Luca, Geovana" }
+            ];
+            salvarDados();
+        }
     }
 
-    // FUNÇÃO 2: VOZ COMANDO (GOOGLE TEXT-TO-SPEECH)
+    function salvarDados() {
+        localStorage.setItem('gruposCafe', JSON.stringify(grupos));
+    }
+
+    // ============ ÁUDIO E NOTIFICAÇÕES ============
+    function tocarSireneModerna() {
+        if (!audioCtx) return;
+
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const osc3 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc3.type = 'square';
+
+        const tempo = audioCtx.currentTime;
+
+        // Padrão de frequências mais musical e chamativo
+        osc1.frequency.setValueAtTime(800, tempo);
+        osc1.frequency.exponentialRampToValueAtTime(1200, tempo + 0.15);
+
+        osc2.frequency.setValueAtTime(600, tempo);
+        osc2.frequency.exponentialRampToValueAtTime(900, tempo + 0.15);
+
+        osc3.frequency.setValueAtTime(1000, tempo);
+        osc3.frequency.exponentialRampToValueAtTime(1400, tempo + 0.15);
+
+        // Envelope de volume
+        gain.gain.setValueAtTime(0.3, tempo);
+        gain.gain.exponentialRampToValueAtTime(0.05, tempo + 0.5);
+
+        // Filtro para tornar mais suave
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, tempo);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        osc3.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start();
+        osc2.start();
+        osc3.start();
+
+        osc1.stop(tempo + 0.5);
+        osc2.stop(tempo + 0.5);
+        osc3.stop(tempo + 0.5);
+    }
+
+    function tocarSomAlerta() {
+        // Toca o som de alerta usando Web Audio API
+        tocarSireneModerna();
+        
+        // Também tenta usar o elemento de áudio
+        const audio = document.getElementById('audioAlerta');
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        }
+    }
+
     function falarAviso(horario) {
-        if (ultimaFala === horario) return; // Evita repetir sem parar no mesmo minuto
+        if (ultimaFala === horario) return;
         ultimaFala = horario;
 
         const frase = new SpeechSynthesisUtterance(`Equipe das ${horario} acabou seu tempo por favor se retira`);
         frase.lang = 'pt-BR';
-        frase.rate = 1.1; // Velocidade levemente mais rápida para urgência
-        frase.pitch = 1;
+        frase.rate = 1.2;
+        frase.pitch = 1.1;
+        frase.volume = 1;
         window.speechSynthesis.speak(frase);
     }
 
+    function mostrarNotificacao(mensagem) {
+        const notif = document.createElement('div');
+        notif.className = 'notificacao';
+        notif.textContent = mensagem;
+        document.body.appendChild(notif);
+
+        setTimeout(() => {
+            notif.style.animation = 'slideInRight 0.5s ease reverse';
+            setTimeout(() => notif.remove(), 500);
+        }, 3000);
+    }
+
+    // ============ PAINEL PRINCIPAL ============
     function iniciarPainel() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        carregarDados();
         document.getElementById('tela-inicial').style.display = 'none';
         document.getElementById('painel-principal').style.display = 'block';
         popularTabela();
         setInterval(atualizarSistema, 1000);
+        mostrarNotificacao('✅ Sistema iniciado com sucesso!');
     }
 
     function popularTabela() {
         const corpo = document.getElementById('lista-corpo');
-        corpo.innerHTML = ''; 
+        corpo.innerHTML = '';
         grupos.forEach((g, index) => {
             corpo.innerHTML += `<tr id="tr-${index}"><td><strong>${g.hora}</strong></td><td class="nome-tabela">${g.nomes}</td></tr>`;
         });
     }
 
+    // ============ MODAL DE EDIÇÃO ============
     function abrirModal() {
         const formDiv = document.getElementById('form-edicao');
         formDiv.innerHTML = '';
         grupos.forEach((g, index) => {
-            formDiv.innerHTML += `<div class="input-group"><label>${g.hora}</label><input type="text" id="edit-nome-${index}" value="${g.nomes}"></div>`;
+            formDiv.innerHTML += `
+                <div class="input-group">
+                    <label>Horário ${g.hora}</label>
+                    <input type="text" id="edit-nome-${index}" value="${g.nomes}" placeholder="Digite os nomes da equipe">
+                </div>
+            `;
         });
         document.getElementById('modal-edicao').style.display = 'flex';
     }
 
-    function fecharModal() { document.getElementById('modal-edicao').style.display = 'none'; }
-
-    function salvarEdicao() {
-        grupos.forEach((g, index) => { g.nomes = document.getElementById(`edit-nome-${index}`).value; });
-        popularTabela(); fecharModal();
+    function fecharModal() {
+        document.getElementById('modal-edicao').style.display = 'none';
     }
 
+    function salvarEdicao() {
+        grupos.forEach((g, index) => {
+            const novoNome = document.getElementById(`edit-nome-${index}`).value;
+            if (novoNome.trim()) {
+                g.nomes = novoNome;
+            }
+        });
+        salvarDados();
+        popularTabela();
+        fecharModal();
+        mostrarNotificacao('💾 Alterações salvas com sucesso!');
+    }
+
+    // ============ TESTE DE ALARME ============
     function testarTransicão() {
         if (emModoTeste) return;
         emModoTeste = true;
-        
-        tocarSirene();
+
+        tocarSomAlerta();
         falarAviso("TESTE");
-        
+
         const boneco = document.getElementById('boneco');
         const alerta = document.getElementById('alerta-saida');
-        
+
         boneco.innerText = "🙅‍♂️";
         boneco.classList.add('alert-mode');
         alerta.style.display = "block";
-        
+
         setTimeout(() => {
             boneco.innerText = "🚶‍♂️➡️☕";
             boneco.classList.remove('alert-mode');
@@ -208,6 +741,7 @@
         }, 6000);
     }
 
+    // ============ ATUALIZAÇÃO DO SISTEMA ============
     function atualizarSistema() {
         if (emModoTeste) return;
 
@@ -235,13 +769,13 @@
                     alerta.style.display = "block";
                     boneco.innerText = "🙅‍♂️";
                     boneco.classList.add('alert-mode');
-                    
-                    // Alerta sonoro agressivo e Voz
+
+                    // Alerta sonoro agressivo a cada 10 segundos
                     if (agora.getSeconds() % 10 === 0) {
-                        tocarSirene();
+                        tocarSomAlerta();
                         falarAviso(g.hora);
                     }
-                } 
+                }
                 // TRANSIÇÃO (Primeiros 15 segundos)
                 else if (agoraMinutos === inicio && agora.getSeconds() < 15) {
                     boneco.innerText = "🚶‍♂️➡️☕";
@@ -266,6 +800,9 @@
             ultimaFala = "";
         }
     }
+
+    // Carrega dados ao inicializar
+    carregarDados();
 </script>
 
 </body>
