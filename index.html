@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Gestão de Pausas (Modo TV Otimizado)</title>
+    <title>Logística - Gestão de Pausas (Direto)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -47,19 +47,11 @@
         .btn-secundario { background: #444; color: white; margin-bottom: 10px; }
         .btn-teste { background: #d32f2f; color: #fff; width: auto; margin-left: 10px; }
 
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        
-        /* Reduzida a animação de piscar para gastar menos memória da TV */
         @keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; color: white;} }
         .alert-mode { animation: piscar 1s infinite; color: #f44336; }
     </style>
 </head>
 <body>
-
-<div id="overlay">
-    <h1 style="color: #ff9800; margin-bottom: 20px;">Controle Logístico - Café</h1>
-    <button class="btn-acao" style="width: 300px; height: 80px; font-size: 1.5em;" onclick="iniciarApp()">🚀 ATIVAR SISTEMA</button>
-</div>
 
 <div class="sidebar">
     <h2>Funcionários</h2>
@@ -113,35 +105,40 @@
     const horariosFixos = ["02:00", "02:10", "02:20", "02:30", "02:40", "02:50", "03:00", "03:10", "03:20", "03:30"];
     let dadosEscala = {}; 
     
-    // Variáveis de Controle de Memória (Para a TV não travar)
+    // Variáveis de Controle
     let memoriaRelogio = "";
     let memoriaAviso = false;
     let audioDisparado = false;
+    let audioDesbloqueado = false;
 
+    // Enter para adicionar nome
     document.getElementById("novoNome").addEventListener("keypress", function(event) {
         if (event.key === "Enter") { event.preventDefault(); adicionarNomeManual(); }
     });
 
-    function iniciarApp() {
-        // Desbloqueia o áudio silenciosamente
-        const som = document.getElementById('somAlarme');
-        som.volume = 0;
-        som.play().then(() => {
-            som.pause();
-            som.currentTime = 0;
-            som.volume = 1; // Volta ao volume máximo para quando precisar tocar de verdade
-        }).catch(e => console.log("Áudio aguardando interação"));
+    // Tenta desbloquear o áudio no primeiro clique na tela (qualquer lugar)
+    document.body.addEventListener('click', function() {
+        if (!audioDesbloqueado) {
+            const som = document.getElementById('somAlarme');
+            som.volume = 0;
+            som.play().then(() => {
+                som.pause();
+                som.currentTime = 0;
+                som.volume = 1; 
+                audioDesbloqueado = true;
+            }).catch(e => console.log("Aguardando interação para o áudio"));
+        }
+    });
 
-        document.getElementById('overlay').style.display = 'none';
-        
+    // Inicia o sistema automaticamente quando a tela carrega
+    window.onload = function() {
         gerarGrid();
         carregarDoBanco(); 
         carregarBancoLateral(); 
-
         setInterval(atualizarLogica, 1000); 
-    }
+    };
 
-    // --- FUNÇÕES DE BANCO DE DADOS (Mantidas) ---
+    // --- FUNÇÕES DE BANCO DE DADOS ---
     function salvarNoBanco() { db.collection("logistica").doc("escalaDeHoje").set(dadosEscala); }
     function carregarDoBanco() {
         db.collection("logistica").doc("escalaDeHoje").onSnapshot((doc) => {
@@ -159,13 +156,13 @@
             if (doc.exists && doc.data().nomes && doc.data().nomes.length > 0) {
                 doc.data().nomes.forEach(nome => adicionarAoPoolDOM(nome));
             } else {
-                const preSalvos = [ "GUSTAVO OLIVEIRA", "KAREN CRISTINI", "MARCIO FERREIRA" ]; // Simplificado
+                const preSalvos = [ "GUSTAVO OLIVEIRA", "KAREN CRISTINI", "MARCIO FERREIRA" ];
                 preSalvos.forEach(nome => adicionarAoPoolDOM(nome));
             }
         });
     }
 
-    // --- DRAG AND DROP (Mantido) ---
+    // --- DRAG AND DROP ---
     function adicionarNomeManual() {
         const input = document.getElementById('novoNome'); const nome = input.value.trim().toUpperCase();
         if (nome !== "") { adicionarAoPoolDOM(nome); salvarBancoLateral(); input.value = ""; }
@@ -204,13 +201,11 @@
         if(container && dadosEscala[h]) { container.innerHTML = dadosEscala[h].map(n => `<span class="nome-tag" draggable="true" ondragstart="drag(event)" id="tag-${Math.random().toString(36).substr(2, 9)}">${n}</span>`).join(''); }
     }
 
-    // ==========================================
-    // SISTEMA DE ALARME OTIMIZADO PARA TV
-    // ==========================================
+    // --- ALARME DA TV ---
     function dispararAlarme() {
         const som = document.getElementById('somAlarme');
         if (!audioDisparado) {
-            som.play().catch(e => console.log("TV bloqueou o som"));
+            som.play().catch(e => console.log("TV bloqueou o som por falta de clique"));
             audioDisparado = true;
         }
     }
@@ -227,14 +222,11 @@
         }, 4000);
     }
 
-    // ==========================================
-    // LÓGICA DE TEMPO (Protegida contra vazamento de memória)
-    // ==========================================
+    // --- LÓGICA DE TEMPO ---
     function atualizarLogica() {
         const agora = new Date();
         const horaTexto = agora.toLocaleTimeString();
         
-        // Só atualiza o relógio na tela se a hora mudou (poupa processador da TV)
         if (horaTexto !== memoriaRelogio) {
             document.getElementById('clock').innerText = horaTexto;
             memoriaRelogio = horaTexto;
@@ -255,7 +247,6 @@
             if (agoraMinutos >= inicio && agoraMinutos < fim) {
                 alguemNoCafe = true;
                 
-                // Evita ficar adicionando classe toda hora
                 if (!slotBox.classList.contains('active-row')) slotBox.classList.add('active-row');
                 
                 const nomes = (dadosEscala[h] && dadosEscala[h].length > 0) ? dadosEscala[h].join(', ') : "EQUIPE NÃO DEFINIDA";
@@ -263,7 +254,6 @@
                     document.getElementById('grupo-nome').innerText = nomes;
                 }
 
-                // Minuto final: Alarme!
                 if (agoraMinutos === fim - 1) { 
                     if (!memoriaAviso) {
                         aviso.style.display = "block";
@@ -272,18 +262,15 @@
                         memoriaAviso = true;
                     }
                     
-                    // Toca o alarme a cada 10 segundos
                     if (agora.getSeconds() % 10 === 0) { 
                         dispararAlarme(); 
                     } else {
-                        audioDisparado = false; // reseta para o próximo toque
+                        audioDisparado = false; 
                     }
                 } 
-                // Transição
                 else if (agoraMinutos === inicio && agora.getSeconds() < 15) {
                     boneco.innerText = "🚶‍♂️➡️☕"; boneco.classList.remove('alert-mode'); aviso.style.display = "none"; memoriaAviso = false;
                 } 
-                // Normal
                 else {
                     boneco.innerText = "☕"; boneco.classList.remove('alert-mode'); aviso.style.display = "none"; memoriaAviso = false;
                 }
