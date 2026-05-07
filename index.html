@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Gestão de Pausas V5</title>
+    <title>Logística - Gestão de Pausas V6 (Otimizado para TV)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -13,22 +13,18 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Barra Lateral */
         .sidebar { width: 320px; background: #1e1e1e; border-right: 2px solid #ff9800; display: flex; flex-direction: column; padding: 15px; }
         .sidebar h2 { color: #ff9800; font-size: 1.2em; text-align: center; margin-top: 0; }
         
-        /* Input Manual */
         .box-inclusao { display: flex; gap: 5px; margin-bottom: 15px; }
         .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; font-weight: bold; text-transform: uppercase; }
         .box-inclusao button { background: #00e676; color: #121212; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 45px; font-size: 1.2em; transition: 0.3s; }
-        .box-inclusao button:hover { background: #00c853; }
-
+        
         #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: #252525; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px dashed #555; min-height: 200px;}
         
         .funcionario-item { background: #333; margin: 5px 0; padding: 10px; border-radius: 5px; cursor: grab; border-left: 4px solid #2196F3; font-weight: bold; font-size: 0.85em; transition: 0.2s; word-wrap: break-word; }
         .funcionario-item:active { cursor: grabbing; opacity: 0.5; }
 
-        /* Painel Principal */
         .main-content { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
         .container { max-width: 950px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 2px solid #ff9800; position: relative; }
         
@@ -39,7 +35,6 @@
         .status-card { background: #333; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 10px solid #ff9800; }
         .nomes-ativos { font-size: 1.4em; color: #ffeb3b; font-weight: 900; text-transform: uppercase; min-height: 40px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
 
-        /* Tabela de Horários */
         .grid-horarios { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
         .slot-horario { background: #252525; border: 1px solid #444; border-radius: 8px; padding: 10px; text-align: left; min-height: 80px; transition: 0.3s; }
         .slot-horario.drag-over { border: 2px solid #00e676; background: #2e3d2e; }
@@ -50,10 +45,8 @@
         .nome-tag { background: #444; display: inline-block; padding: 4px 8px; border-radius: 4px; margin: 3px; font-size: 0.9em; border: 1px solid #666; cursor: grab; }
 
         .btn-acao { background: #ff9800; color: #000; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-        .btn-acao:hover { background: #e68a00; }
         .btn-secundario { background: #444; color: white; margin-bottom: 10px; }
         .btn-teste { background: #d32f2f; color: #fff; width: auto; margin-left: 10px; }
-        .btn-teste:hover { background: #b71c1c; }
 
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         @keyframes shake { 0% { transform: translate(1px, 1px); } 20% { transform: translate(-3px, 0px); } 100% { transform: translate(1px, -1px); } }
@@ -69,24 +62,21 @@
 
 <div class="sidebar">
     <h2>Funcionários</h2>
-    
     <div class="box-inclusao">
         <input type="text" id="novoNome" placeholder="Digitar nome novo..." autocomplete="off">
         <button onclick="adicionarNomeManual()" title="Adicionar">➕</button>
     </div>
-
     <input type="file" id="inputExcel" accept=".xlsx, .xls" style="display: none;" onchange="importarExcel(event)">
-    <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 Importar Excel (.xlsx)</button>
+    <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 Importar Excel</button>
     
-    <div id="lista-disponiveis" ondrop="dropNoPool(event)" ondragover="allowDrop(event)">
-        </div>
+    <div id="lista-disponiveis" ondrop="dropNoPool(event)" ondragover="allowDrop(event)"></div>
 </div>
 
 <div class="main-content">
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div id="clock">00:00:00</div>
-            <button class="btn-acao btn-teste" onclick="testarAlerta()">🚨 TESTAR ALARME</button>
+            <button class="btn-acao btn-teste" onclick="testarAlerta()">🚨 TESTAR ALARME DA TV</button>
         </div>
 
         <div class="mascote-container"><div id="boneco" class="boneco">📦</div></div>
@@ -102,9 +92,6 @@
 </div>
 
 <script>
-    // ==========================================
-    // 1. CONFIGURAÇÃO DO FIREBASE (Suas Chaves)
-    // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyAP_R6alrWpn-4KosHhGAxmCaslUnsstms",
         authDomain: "cafe-79569.firebaseapp.com",
@@ -117,20 +104,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ==========================================
-    // 2. VARIÁVEIS DO SISTEMA
-    // ==========================================
     let audioCtx;
     let ultimaFala = "";
     const horariosFixos = ["02:00", "02:10", "02:20", "02:30", "02:40", "02:50", "03:00", "03:10", "03:20", "03:30"];
     let dadosEscala = {}; 
 
-    // Permitir adicionar nome apertando "Enter"
     document.getElementById("novoNome").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            adicionarNomeManual();
-        }
+        if (event.key === "Enter") { event.preventDefault(); adicionarNomeManual(); }
     });
 
     function iniciarApp() {
@@ -138,108 +118,69 @@
         document.getElementById('overlay').style.display = 'none';
         
         gerarGrid();
-        carregarDoBanco(); // Carrega os horários
-        carregarBancoLateral(); // Carrega a barra lateral
+        carregarDoBanco(); 
+        carregarBancoLateral(); 
 
         setInterval(atualizarLogica, 1000); 
     }
 
-    // ==========================================
-    // 3. BANCO DE DADOS - HORÁRIOS (ESCALA)
-    // ==========================================
-    function salvarNoBanco() {
-        db.collection("logistica").doc("escalaDeHoje").set(dadosEscala);
-    }
+    function salvarNoBanco() { db.collection("logistica").doc("escalaDeHoje").set(dadosEscala); }
 
     function carregarDoBanco() {
         db.collection("logistica").doc("escalaDeHoje").onSnapshot((doc) => {
-            if (doc.exists) {
-                dadosEscala = doc.data();
-            } else {
-                horariosFixos.forEach(h => dadosEscala[h] = []);
-            }
-            horariosFixos.forEach(h => {
-                if(!dadosEscala[h]) dadosEscala[h] = [];
-                renderizarSlot(h);
-            });
+            if (doc.exists) { dadosEscala = doc.data(); } 
+            else { horariosFixos.forEach(h => dadosEscala[h] = []); }
+            horariosFixos.forEach(h => { if(!dadosEscala[h]) dadosEscala[h] = []; renderizarSlot(h); });
         });
     }
 
-    // ==========================================
-    // 4. BANCO DE DADOS - BARRA LATERAL (NOVO)
-    // ==========================================
     function salvarBancoLateral() {
-        const nomesLateral = Array.from(document.getElementById('lista-disponiveis').children)
-                                  .map(el => el.innerText);
+        const nomesLateral = Array.from(document.getElementById('lista-disponiveis').children).map(el => el.innerText);
         db.collection("logistica").doc("listaLateral").set({ nomes: nomesLateral });
     }
 
     function carregarBancoLateral() {
         db.collection("logistica").doc("listaLateral").get().then((doc) => {
             document.getElementById('lista-disponiveis').innerHTML = '';
-            
             if (doc.exists && doc.data().nomes && doc.data().nomes.length > 0) {
                 doc.data().nomes.forEach(nome => adicionarAoPoolDOM(nome));
             } else {
-                // Nomes pré-salvos com base no seu Print!
                 const preSalvos = [
-                    "GUSTAVO OLIVEIRA SANTANA", "KAREN CRISTINI DOS SANTOS LOBO", 
-                    "MARCIO FERREIRA RIBEIRO", "MARCOS PAULO GARCIA FREITAS DA SILVA", 
-                    "MARIA EDUARDA GARCIA DE MATTOS", "NATHALIA DE LIMA CARDOSO", 
-                    "PATRICK DE ARAUJO CARDOSO", "PAULO SERGIO DA SILVA JUNIOR", 
-                    "RODRIGO CARDOSO DOS SANTOS", "RODRIGO DE MELO SILVA", 
-                    "TUANY DE SENNA MELO", "VICTOR HUGO DE OLIVEIRA", 
+                    "GUSTAVO OLIVEIRA SANTANA", "KAREN CRISTINI DOS SANTOS LOBO", "MARCIO FERREIRA RIBEIRO", 
+                    "MARCOS PAULO GARCIA FREITAS DA SILVA", "MARIA EDUARDA GARCIA DE MATTOS", "NATHALIA DE LIMA CARDOSO", 
+                    "PATRICK DE ARAUJO CARDOSO", "PAULO SERGIO DA SILVA JUNIOR", "RODRIGO CARDOSO DOS SANTOS", 
+                    "RODRIGO DE MELO SILVA", "TUANY DE SENNA MELO", "VICTOR HUGO DE OLIVEIRA", 
                     "YASMIN FONTES DOS SANTOS", "YURI DE OLIVEIRA MURY"
                 ];
                 preSalvos.forEach(nome => adicionarAoPoolDOM(nome));
-                salvarBancoLateral(); // Salva os pré-salvos no Firebase
+                salvarBancoLateral();
             }
         });
     }
 
-    // ==========================================
-    // 5. FUNÇÕES DE INCLUSÃO DE NOME
-    // ==========================================
     function adicionarNomeManual() {
         const input = document.getElementById('novoNome');
         const nome = input.value.trim().toUpperCase();
-        
         if (nome !== "") {
-            adicionarAoPoolDOM(nome); // Coloca na tela
-            salvarBancoLateral();     // Salva no banco da lateral
-            input.value = "";         // Limpa a caixinha
+            adicionarAoPoolDOM(nome); salvarBancoLateral(); input.value = "";
         }
     }
 
-    // Cria a caixinha do nome na barra lateral visualmente
     function adicionarAoPoolDOM(nome) {
         const pool = document.getElementById('lista-disponiveis');
-        // Evita duplicar se o nome já estiver lá
-        const jaExiste = Array.from(pool.children).some(el => el.innerText === nome);
-        if(jaExiste) return;
-
+        if(Array.from(pool.children).some(el => el.innerText === nome)) return;
         const div = document.createElement('div');
-        div.className = 'funcionario-item';
-        div.draggable = true;
+        div.className = 'funcionario-item'; div.draggable = true;
         div.id = 'func-' + Math.random().toString(36).substr(2, 9);
-        div.innerText = nome;
-        div.ondragstart = drag;
+        div.innerText = nome; div.ondragstart = drag;
         pool.appendChild(div);
     }
 
-    // ==========================================
-    // 6. DRAG AND DROP (ARRASTAR)
-    // ==========================================
     function gerarGrid() {
         const grid = document.getElementById('grid-horarios');
         grid.innerHTML = '';
         horariosFixos.forEach(h => {
-            grid.innerHTML += `
-                <div class="slot-horario" id="box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)">
-                    <div class="slot-header"><span>🕒 ${h}</span></div>
-                    <div class="slot-nomes" id="slot-${h}"></div>
-                </div>
-            `;
+            grid.innerHTML += `<div class="slot-horario" id="box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)"><div class="slot-header"><span>🕒 ${h}</span></div><div class="slot-nomes" id="slot-${h}"></div></div>`;
         });
     }
 
@@ -250,49 +191,21 @@
         ev.dataTransfer.setData("nome", ev.target.innerText);
         ev.dataTransfer.setData("origemId", ev.target.id);
         const pai = ev.target.parentElement;
-        if(pai.id.startsWith('slot-')) {
-            ev.dataTransfer.setData("horaOrigem", pai.id.replace('slot-', ''));
-        }
+        if(pai.id.startsWith('slot-')) { ev.dataTransfer.setData("horaOrigem", pai.id.replace('slot-', '')); }
     }
 
     function dropNoHorario(ev, hora) {
-        ev.preventDefault();
-        ev.currentTarget.classList.remove('drag-over');
-        const nome = ev.dataTransfer.getData("nome");
-        const horaOrigem = ev.dataTransfer.getData("horaOrigem");
-
-        // Tira do local antigo
-        if (horaOrigem) {
-            dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome);
-            renderizarSlot(horaOrigem);
-        } else {
-            const el = document.getElementById(ev.dataTransfer.getData("origemId"));
-            if (el) el.remove();
-            salvarBancoLateral(); // Atualiza a lateral porque o nome saiu de lá
-        }
-
-        // Coloca no novo horário
-        if (!dadosEscala[hora].includes(nome)) {
-            dadosEscala[hora].push(nome);
-            renderizarSlot(hora);
-            salvarNoBanco(); // Salva a escala
-        }
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+        const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
+        if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); } 
+        else { const el = document.getElementById(ev.dataTransfer.getData("origemId")); if (el) el.remove(); salvarBancoLateral(); }
+        if (!dadosEscala[hora].includes(nome)) { dadosEscala[hora].push(nome); renderizarSlot(hora); salvarNoBanco(); }
     }
 
     function dropNoPool(ev) {
-        ev.preventDefault();
-        ev.currentTarget.classList.remove('drag-over');
-        const nome = ev.dataTransfer.getData("nome");
-        const horaOrigem = ev.dataTransfer.getData("horaOrigem");
-
-        if (horaOrigem) {
-            dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome);
-            renderizarSlot(horaOrigem);
-            salvarNoBanco(); // Salva que ele saiu da escala
-            
-            adicionarAoPoolDOM(nome);
-            salvarBancoLateral(); // Salva que ele voltou pra lateral
-        }
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+        const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
+        if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); salvarNoBanco(); adicionarAoPoolDOM(nome); salvarBancoLateral(); }
     }
 
     function renderizarSlot(h) {
@@ -303,53 +216,62 @@
     }
 
     function importarExcel(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const planilha = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(planilha, {header: 1});
-            
+            const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, {type: 'array'});
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
             json.forEach(linha => { if(linha[0]) adicionarAoPoolDOM(linha[0]); });
-            salvarBancoLateral(); // Salva o excel importado no banco
-            event.target.value = '';
+            salvarBancoLateral(); event.target.value = '';
         };
         reader.readAsArrayBuffer(file);
     }
 
     // ==========================================
-    // 7. ALERTAS E RELÓGIO (Mantidos iguas)
+    // SISTEMA DE ÁUDIO REFORÇADO PARA TVs
     // ==========================================
     function falar(texto) {
-        if (ultimaFala === texto) return;
-        ultimaFala = texto;
-        const msg = new SpeechSynthesisUtterance(texto);
-        msg.lang = 'pt-BR';
-        msg.rate = 1.1;
-        window.speechSynthesis.speak(msg);
+        try {
+            if (!('speechSynthesis' in window)) return; // Se a TV não suporta, aborta sem dar erro
+            if (ultimaFala === texto) return;
+            ultimaFala = texto;
+            const msg = new SpeechSynthesisUtterance(texto);
+            msg.lang = 'pt-BR';
+            window.speechSynthesis.speak(msg);
+        } catch (erro) {
+            console.log("Voz não suportada na TV. Usando apenas sirene.");
+        }
     }
 
     function tocarSirene() {
-        if (!audioCtx) return;
-        const osc1 = audioCtx.createOscillator();
-        const osc2 = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        const tempo = audioCtx.currentTime;
-        
-        osc1.type = 'sawtooth'; osc2.type = 'square';
-        osc1.frequency.setValueAtTime(440, tempo); osc1.frequency.exponentialRampToValueAtTime(880, tempo + 0.5);
-        osc2.frequency.setValueAtTime(880, tempo); osc2.frequency.exponentialRampToValueAtTime(440, tempo + 0.5);
-        
-        gain.gain.setValueAtTime(0.2, tempo); gain.gain.exponentialRampToValueAtTime(0.01, tempo + 1);
-        osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
-        
-        osc1.start(); osc2.start(); osc1.stop(tempo + 1); osc2.stop(tempo + 1);
+        try {
+            if (!audioCtx) return;
+            
+            // FORÇA A TV A ACORDAR O SOM SE ESTIVER DORMINDO
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const tempo = audioCtx.currentTime;
+            
+            osc1.type = 'sawtooth'; osc2.type = 'square';
+            osc1.frequency.setValueAtTime(440, tempo); osc1.frequency.exponentialRampToValueAtTime(880, tempo + 0.5);
+            osc2.frequency.setValueAtTime(880, tempo); osc2.frequency.exponentialRampToValueAtTime(440, tempo + 0.5);
+            
+            gain.gain.setValueAtTime(0.2, tempo); gain.gain.exponentialRampToValueAtTime(0.01, tempo + 1);
+            osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+            
+            osc1.start(); osc2.start(); osc1.stop(tempo + 1); osc2.stop(tempo + 1);
+        } catch (erro) {
+            console.log("Erro na sirene da TV:", erro);
+        }
     }
 
     function testarAlerta() {
-        tocarSirene(); falar("Teste do sistema de comunicação do café");
+        tocarSirene(); falar("Teste do sistema de comunicação do café na televisão");
         document.getElementById('boneco').innerText = "🙅‍♂️";
         setTimeout(() => { document.getElementById('boneco').innerText = "📦"; ultimaFala = ""; }, 4000);
     }
@@ -380,7 +302,10 @@
                     aviso.style.display = "block";
                     boneco.innerText = "🙅‍♂️";
                     boneco.classList.add('alert-mode');
-                    if (agora.getSeconds() % 10 === 0) { tocarSirene(); falar(`Equipe das ${h} acabou seu tempo por favor se retira`); }
+                    if (agora.getSeconds() % 10 === 0) { 
+                        tocarSirene(); 
+                        falar(`Equipe das ${h} acabou seu tempo por favor se retira`); 
+                    }
                 } else if (agoraMinutos === inicio && agora.getSeconds() < 15) {
                     boneco.innerText = "🚶‍♂️➡️☕"; boneco.classList.remove('alert-mode'); aviso.style.display = "none";
                 } else {
