@@ -3,93 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Gestão de Pausas (Direto)</title>
+    <title>Logística - Painel de Controle de Pausas</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        /* --- ESTILO INDUSTRIAL FUTURISTA (CYBERPUNK) --- */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #050509; color: #a2aab3; margin: 0; display: flex; height: 100vh; overflow: hidden; transition: background 0.3s; }
         
-        .sidebar { width: 320px; background: #1e1e1e; border-right: 2px solid #ff9800; display: flex; flex-direction: column; padding: 15px; }
-        .sidebar h2 { color: #ff9800; font-size: 1.2em; text-align: center; margin-top: 0; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0e14; }
+        ::-webkit-scrollbar-thumb { background: #00f2fe; border-radius: 3px; }
+
+        /* --- BARRA LATERAL --- */
+        .sidebar { width: 300px; background: #0a0e14; border-right: 2px solid #1f293a; display: flex; flex-direction: column; padding: 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.7); z-index: 10; transition: 0.3s; }
+        .sidebar h2 { color: #00f2fe; font-size: 1.1em; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; text-shadow: 0 0 10px rgba(0, 242, 254, 0.5); }
         
         .box-inclusao { display: flex; gap: 5px; margin-bottom: 15px; }
-        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #333; color: white; font-weight: bold; text-transform: uppercase; }
-        .box-inclusao button { background: #00e676; color: #121212; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 45px; font-size: 1.2em; transition: 0.3s; }
+        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 4px; border: 1px solid #1f293a; background: #050509; color: #fff; text-transform: uppercase; outline: none; font-size: 0.85em; }
+        .box-inclusao input:focus { border-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.3); }
+        .box-inclusao button { background: #00f2fe; color: #050509; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1.1em; transition: 0.2s; }
+        .box-inclusao button:hover { background: #4facfe; }
         
-        #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: #252525; border-radius: 8px; padding: 10px; margin-top: 10px; border: 1px dashed #555; min-height: 200px;}
-        
-        .funcionario-item { background: #333; margin: 5px 0; padding: 10px; border-radius: 5px; cursor: grab; border-left: 4px solid #2196F3; font-weight: bold; font-size: 0.85em; transition: 0.2s; word-wrap: break-word; }
-        .funcionario-item:active { cursor: grabbing; opacity: 0.5; }
+        #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: #080a10; border-radius: 6px; padding: 8px; border: 1px solid #1f293a; }
+        .funcionario-item { background: #10141d; margin: 5px 0; padding: 10px; border-radius: 4px; cursor: grab; border-left: 3px solid #1f293a; font-size: 0.85em; color: #fff; font-weight: 500; transition: 0.2s; }
+        .funcionario-item:hover { border-left-color: #00f2fe; background: #161b27; box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
 
-        .main-content { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
-        .container { max-width: 950px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 15px; border: 2px solid #ff9800; position: relative; }
+        /* --- PAINEL PRINCIPAL --- */
+        .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; background: radial-gradient(circle at center, #0d121a, #050509); position: relative; transition: 0.3s;}
+        .container { flex-grow: 1; display: flex; flex-direction: column; max-width: 1200px; margin: auto; width: 100%; transition: 0.3s; }
         
-        #clock { font-size: 2.5em; font-weight: bold; color: #00e676; margin-bottom: 10px; }
-        .mascote-container { height: 100px; display: flex; justify-content: center; align-items: center; }
-        .boneco { font-size: 60px; transition: 0.3s; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1f293a; padding-bottom: 15px; margin-bottom: 20px; }
+        .botoes-topo { display: flex; gap: 10px; }
+        #clock { font-size: 3em; font-weight: 200; color: #fff; font-family: 'Monaco', 'Courier New', monospace; letter-spacing: 3px; text-shadow: 0 0 15px rgba(255,255,255,0.3); transition: 0.3s; }
+        .titulo-painel { text-transform: uppercase; letter-spacing: 3px; color: #ff9900; font-weight: bold; font-size: 1.2em; text-shadow: 0 0 10px rgba(255,153,0,0.3); }
+
+        /* QUADRO PRINCIPAL */
+        .status-card { background: #0a0e14; border: 1px solid #1f293a; border-radius: 12px; padding: 30px; display: flex; align-items: center; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; transition: 0.3s; }
+        .status-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #4facfe, #00f2fe); }
         
-        .status-card { background: #333; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 10px solid #ff9800; }
-        .nomes-ativos { font-size: 1.4em; color: #ffeb3b; font-weight: 900; text-transform: uppercase; min-height: 40px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
+        .info-grupo { flex-grow: 1; text-align: left; }
+        .label-status { font-size: 0.9em; color: #5c6773; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; transition: 0.3s; }
+        .nomes-ativos { font-size: 2.2em; color: #fff; font-weight: 800; text-transform: uppercase; margin: 10px 0; line-height: 1.2; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); min-height: 1.2em; transition: 0.3s;}
+        .aviso-saida { font-size: 1.5em; color: #ff3333; font-weight: bold; display: none; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; transition: 0.3s;}
 
-        .grid-horarios { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-        .slot-horario { background: #252525; border: 1px solid #444; border-radius: 8px; padding: 10px; text-align: left; min-height: 80px; transition: 0.3s; }
-        .slot-horario.drag-over { border: 2px solid #00e676; background: #2e3d2e; }
-        .slot-horario.active-row { border-left: 5px solid #00e676; background-color: #388e3c; }
-        .slot-header { font-weight: bold; color: #ff9800; border-bottom: 1px solid #444; margin-bottom: 5px; display: flex; justify-content: space-between; }
-        .slot-nomes { font-size: 0.85em; color: #fff; min-height: 30px; }
+        /* ANIMAÇÃO DO MASCOTE E TEMPO CIRCULAR */
+        .tempo-container { position: relative; width: 150px; height: 150px; flex-shrink: 0; transition: 0.3s; overflow: visible; }
+        .circulo-svg { transform: rotate(-90deg); width: 100%; height: 100%; overflow: visible; }
+        .circulo-fundo { fill: none; stroke: #1f293a; stroke-width: 8; }
+        .circulo-progresso { fill: none; stroke: #00f2fe; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear, stroke 0.5s; filter: drop-shadow(0 0 8px #00f2fe); }
+        .mascote-logistica { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; transition: 0.3s; }
+
+        @keyframes pulsar-vermelho { 0% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } 50% { filter: drop-shadow(0 0 25px #ff0000); stroke: #ff0000; } 100% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } }
+        .tempo-critico .circulo-progresso { animation: pulsar-vermelho 1s infinite; }
         
-        .nome-tag { background: #444; display: inline-block; padding: 4px 8px; border-radius: 4px; margin: 3px; font-size: 0.9em; border: 1px solid #666; cursor: grab; }
+        @keyframes glitch { 0%, 40%, 80%, 100% { text-shadow: 2px 0 #ff3333, -2px 0 #00f2fe; } 20%, 60% { text-shadow: -2px 0 #ff3333, 2px 0 #00f2fe; } }
+        .texto-glitch { animation: glitch 0.3s steps(2, start) infinite; color: #ffeb3b !important; }
 
-        .btn-acao { background: #ff9800; color: #000; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
-        .btn-secundario { background: #444; color: white; margin-bottom: 10px; }
-        .btn-teste { background: #d32f2f; color: #fff; width: auto; margin-left: 10px; }
+        /* GRADE DE HORÁRIOS */
+        .grid-horarios { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: auto; padding-bottom: 10px; transition: 0.3s; }
+        .slot-horario { background: #0a0e14; border: 1px solid #1f293a; border-radius: 8px; padding: 12px; text-align: left; transition: 0.2s; position: relative; opacity: 0.6; }
+        .slot-horario.active-row { border-color: #00f2fe; background: #0d1a24; opacity: 1; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); transform: scale(1.02); z-index: 5;}
+        .slot-header { font-size: 1.1em; font-weight: bold; color: #00f2fe; margin-bottom: 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #1f293a; padding-bottom: 5px; transition: 0.3s;}
+        .slot-nomes { font-size: 0.75em; color: #c5c6c7; min-height: 35px; display: flex; flex-wrap: wrap; gap: 4px; transition: 0.3s; }
+        .nome-tag { background: #10141d; padding: 3px 6px; border-radius: 3px; border: 1px solid #1f293a; transition: 0.3s;}
 
-        @keyframes piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; color: white;} }
-        .alert-mode { animation: piscar 1s infinite; color: #f44336; }
+        /* Botões */
+        .btn-acao { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #050509; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; transition: 0.2s; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.3); }
+        .btn-acao:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 242, 254, 0.4); }
+        .btn-secundario { background: #10141d; color: #a2aab3; border: 1px solid #1f293a; box-shadow: none; margin-bottom: 15px; }
+        .btn-secundario:hover { background: #1f293a; color: #fff; }
+        .btn-pequeno { width: auto; font-size: 0.8em; }
+        .btn-teste { background: #ff3333; color: #fff; box-shadow: none; }
+        .btn-teste:hover { background: #cc0000; box-shadow: none; }
+        
+        #btn-sair-tv { display: none; position: fixed; top: 15px; right: 15px; z-index: 9999; background: #ff3333; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.2em; opacity: 0.2; transition: 0.3s; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
+        #btn-sair-tv:hover { opacity: 1; }
+
+        /* ========================================= */
+        /*              MODO TV ATIVADO              */
+        /* ========================================= */
+        body.tv-mode .sidebar { display: none !important; }
+        body.tv-mode .botoes-topo { display: none !important; }
+        body.tv-mode #btn-sair-tv { display: block; }
+        
+        body.tv-mode .main-content { padding: 2vh 2vw; }
+        body.tv-mode .container { max-width: 98vw; justify-content: space-between; height: 96vh; }
+        
+        body.tv-mode .dash-header { margin-bottom: 1vh; padding-bottom: 1vh; }
+        body.tv-mode #clock { font-size: 6vh; }
+        body.tv-mode .titulo-painel { font-size: 3vh; }
+
+        body.tv-mode .status-card { padding: 4vh 4vw; margin: 1vh 0 2vh 0; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        body.tv-mode .tempo-container { width: 20vh; height: 20vh; }
+        body.tv-mode .mascote-logistica { font-size: 8vh; }
+        
+        body.tv-mode .info-grupo { margin-left: 2vw; }
+        body.tv-mode .label-status { font-size: 2vh; }
+        body.tv-mode .nomes-ativos { font-size: 4.5vh; margin: 1vh 0; line-height: 1.1; }
+        body.tv-mode .aviso-saida { font-size: 3.5vh; margin-top: 1vh; }
+
+        body.tv-mode .grid-horarios { gap: 1vw; margin-top: 1vh; padding-bottom: 1vh; }
+        body.tv-mode .slot-horario { padding: 1.5vh 1vw; }
+        body.tv-mode .slot-header { font-size: 2.2vh; margin-bottom: 1vh; }
+        body.tv-mode .slot-nomes { font-size: 1.6vh; gap: 0.5vw; min-height: 4vh; }
+        body.tv-mode .nome-tag { padding: 0.5vh 0.8vw; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>Funcionários</h2>
+    <h2>📡 PAINEL DE CONTROLE</h2>
     <div class="box-inclusao">
-        <input type="text" id="novoNome" placeholder="Digitar nome novo..." autocomplete="off">
-        <button onclick="adicionarNomeManual()" title="Adicionar">➕</button>
+        <input type="text" id="novoNome" placeholder="NOME DO OPERADOR" autocomplete="off">
+        <button onclick="adicionarNomeManual()">+</button>
     </div>
     <input type="file" id="inputExcel" accept=".xlsx, .xls" style="display: none;" onchange="importarExcel(event)">
-    <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 Importar Excel</button>
+    <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 IMPORTAR EXCEL</button>
     
     <div id="lista-disponiveis" ondrop="dropNoPool(event)" ondragover="allowDrop(event)"></div>
 </div>
 
 <div class="main-content">
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        
+        <div class="dash-header">
+            <div class="titulo-painel">Monitoramento de Pausas</div>
             <div id="clock">00:00:00</div>
-            <button class="btn-acao btn-teste" onclick="testarAlerta()">🚨 TESTAR ALARME DA TV</button>
+            <div class="botoes-topo">
+                <button class="btn-acao btn-pequeno btn-teste" onclick="testarAlerta()">🚨 TESTAR</button>
+                <button class="btn-acao btn-pequeno" onclick="toggleTVMode()">📺 MODO TV</button>
+            </div>
         </div>
 
-        <div class="mascote-container"><div id="boneco" class="boneco">📦</div></div>
+        <div class="status-card" id="card-principal">
+            <div class="tempo-container" id="tempo-visual">
+                <!-- ViewBox aumentado de 160 para 190 para o efeito de brilho não ser cortado nas pontas -->
+                <svg class="circulo-svg" viewBox="-15 -15 190 190">
+                    <circle class="circulo-fundo" cx="80" cy="80" r="70"></circle>
+                    <circle class="circulo-progresso" id="barra-circular" cx="80" cy="80" r="70"></circle>
+                </svg>
+                <div class="mascote-logistica" id="boneco">📦</div>
+            </div>
 
-        <div class="status-card">
-            <div style="color: #bbb; font-size: 0.9em;">AGORA NO CAFÉ:</div>
-            <div id="grupo-nome" class="nomes-ativos">CARREGANDO...</div>
-            <div id="aviso-saida" style="color: #f44336; font-weight: bold; display: none; font-size: 1.5em; margin-top: 10px;">⚠️ TEMPO ESGOTADO! SE RETIRE! ⚠️</div>
+            <div class="info-grupo">
+                <div class="label-status">Equipe em Pausa Ativa:</div>
+                <div id="grupo-nome" class="nomes-ativos">CARREGANDO DADOS...</div>
+                <div id="aviso-saida" class="aviso-saida">⚠️ TEMPO ESGOTADO - RETORNAR AO SETOR ⚠️</div>
+            </div>
         </div>
 
         <div class="grid-horarios" id="grid-horarios"></div>
     </div>
 </div>
 
+<button id="btn-sair-tv" onclick="toggleTVMode()">❌ SAIR DO MODO TV</button>
+
 <audio id="somAlarme" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
 <script>
-    // ==========================================
-    // CONFIGURAÇÃO DO FIREBASE
-    // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyAP_R6alrWpn-4KosHhGAxmCaslUnsstms",
         authDomain: "cafe-79569.firebaseapp.com",
@@ -104,189 +178,177 @@
 
     const horariosFixos = ["02:00", "02:10", "02:20", "02:30", "02:40", "02:50", "03:00", "03:10", "03:20", "03:30"];
     let dadosEscala = {}; 
-    
-    // Variáveis de Controle
-    let memoriaRelogio = "";
-    let memoriaAviso = false;
-    let audioDisparado = false;
     let audioDesbloqueado = false;
+    let memoriaRelogio = "";
 
-    // Enter para adicionar nome
-    document.getElementById("novoNome").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") { event.preventDefault(); adicionarNomeManual(); }
-    });
+    function toggleTVMode() {
+        if (!document.fullscreenElement) {
+            document.body.classList.add('tv-mode');
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            }
+        } else {
+            document.body.classList.remove('tv-mode');
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.log(err));
+            }
+        }
+    }
 
-    // Tenta desbloquear o áudio no primeiro clique na tela (qualquer lugar)
-    document.body.addEventListener('click', function() {
-        if (!audioDesbloqueado) {
-            const som = document.getElementById('somAlarme');
-            som.volume = 0;
-            som.play().then(() => {
-                som.pause();
-                som.currentTime = 0;
-                som.volume = 1; 
-                audioDesbloqueado = true;
-            }).catch(e => console.log("Aguardando interação para o áudio"));
+    // Identifica se a tela cheia foi cancelada pela tecla ESC
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            document.body.classList.remove('tv-mode');
         }
     });
 
-    // Inicia o sistema automaticamente quando a tela carrega
+    document.getElementById("novoNome").addEventListener("keypress", function(e) { if (e.key === "Enter") adicionarNomeManual(); });
+
+    document.body.addEventListener('click', function() {
+        if (!audioDesbloqueado) {
+            const som = document.getElementById('somAlarme');
+            som.volume = 0; som.play().then(() => { som.pause(); som.currentTime = 0; som.volume = 1; audioDesbloqueado = true; }).catch(e => console.log(e));
+        }
+    });
+
     window.onload = function() {
-        gerarGrid();
-        carregarDoBanco(); 
-        carregarBancoLateral(); 
+        gerarGrid(); carregarDoBanco(); carregarBancoLateral(); 
         setInterval(atualizarLogica, 1000); 
     };
 
-    // --- FUNÇÕES DE BANCO DE DADOS ---
     function salvarNoBanco() { db.collection("logistica").doc("escalaDeHoje").set(dadosEscala); }
     function carregarDoBanco() {
         db.collection("logistica").doc("escalaDeHoje").onSnapshot((doc) => {
-            if (doc.exists) { dadosEscala = doc.data(); } else { horariosFixos.forEach(h => dadosEscala[h] = []); }
+            dadosEscala = doc.exists ? doc.data() : {};
             horariosFixos.forEach(h => { if(!dadosEscala[h]) dadosEscala[h] = []; renderizarSlot(h); });
         });
     }
     function salvarBancoLateral() {
-        const nomesLateral = Array.from(document.getElementById('lista-disponiveis').children).map(el => el.innerText);
-        db.collection("logistica").doc("listaLateral").set({ nomes: nomesLateral });
+        const nomes = Array.from(document.getElementById('lista-disponiveis').children).map(el => el.innerText);
+        db.collection("logistica").doc("listaLateral").set({ nomes });
     }
     function carregarBancoLateral() {
         db.collection("logistica").doc("listaLateral").get().then((doc) => {
-            document.getElementById('lista-disponiveis').innerHTML = '';
-            if (doc.exists && doc.data().nomes && doc.data().nomes.length > 0) {
-                doc.data().nomes.forEach(nome => adicionarAoPoolDOM(nome));
-            } else {
-                const preSalvos = [ "GUSTAVO OLIVEIRA", "KAREN CRISTINI", "MARCIO FERREIRA" ];
-                preSalvos.forEach(nome => adicionarAoPoolDOM(nome));
-            }
+            if (doc.exists) doc.data().nomes.forEach(nome => adicionarAoPoolDOM(nome));
         });
     }
 
-    // --- DRAG AND DROP ---
     function adicionarNomeManual() {
         const input = document.getElementById('novoNome'); const nome = input.value.trim().toUpperCase();
-        if (nome !== "") { adicionarAoPoolDOM(nome); salvarBancoLateral(); input.value = ""; }
+        if (nome) { adicionarAoPoolDOM(nome); salvarBancoLateral(); input.value = ""; }
     }
     function adicionarAoPoolDOM(nome) {
         const pool = document.getElementById('lista-disponiveis');
         if(Array.from(pool.children).some(el => el.innerText === nome)) return;
         const div = document.createElement('div'); div.className = 'funcionario-item'; div.draggable = true;
-        div.id = 'func-' + Math.random().toString(36).substr(2, 9);
-        div.innerText = nome; div.ondragstart = drag; pool.appendChild(div);
+        div.id = 'f-' + Math.random(); div.innerText = nome; div.ondragstart = drag; pool.appendChild(div);
     }
     function gerarGrid() {
         const grid = document.getElementById('grid-horarios'); grid.innerHTML = '';
-        horariosFixos.forEach(h => { grid.innerHTML += `<div class="slot-horario" id="box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)"><div class="slot-header"><span>🕒 ${h}</span></div><div class="slot-nomes" id="slot-${h}"></div></div>`; });
+        horariosFixos.forEach(h => { grid.innerHTML += `<div class="slot-horario" id="box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)"><div class="slot-header">🕒 ${h}</div><div class="slot-nomes" id="slot-${h}"></div></div>`; });
     }
     function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
     document.addEventListener("dragleave", function(ev) { if (ev.target.classList) ev.target.classList.remove('drag-over'); });
-    function drag(ev) {
-        ev.dataTransfer.setData("nome", ev.target.innerText); ev.dataTransfer.setData("origemId", ev.target.id);
-        const pai = ev.target.parentElement; if(pai.id.startsWith('slot-')) { ev.dataTransfer.setData("horaOrigem", pai.id.replace('slot-', '')); }
-    }
+    function drag(ev) { ev.dataTransfer.setData("nome", ev.target.innerText); ev.dataTransfer.setData("origemId", ev.target.id); const pai = ev.target.parentElement; if(pai.id.startsWith('slot-')) ev.dataTransfer.setData("horaOrigem", pai.id.replace('slot-', '')); }
     function dropNoHorario(ev, hora) {
-        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
-        const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over'); const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
         if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); } 
         else { const el = document.getElementById(ev.dataTransfer.getData("origemId")); if (el) el.remove(); salvarBancoLateral(); }
         if (!dadosEscala[hora].includes(nome)) { dadosEscala[hora].push(nome); renderizarSlot(hora); salvarNoBanco(); }
     }
     function dropNoPool(ev) {
-        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
-        const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
+        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over'); const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
         if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); salvarNoBanco(); adicionarAoPoolDOM(nome); salvarBancoLateral(); }
     }
     function renderizarSlot(h) {
         const container = document.getElementById(`slot-${h}`);
-        if(container && dadosEscala[h]) { container.innerHTML = dadosEscala[h].map(n => `<span class="nome-tag" draggable="true" ondragstart="drag(event)" id="tag-${Math.random().toString(36).substr(2, 9)}">${n}</span>`).join(''); }
+        if(container && dadosEscala[h]) container.innerHTML = dadosEscala[h].map(n => `<span class="nome-tag">${n}</span>`).join('');
     }
-
-    // --- ALARME DA TV ---
-    function dispararAlarme() {
-        const som = document.getElementById('somAlarme');
-        if (!audioDisparado) {
-            som.play().catch(e => console.log("TV bloqueou o som por falta de clique"));
-            audioDisparado = true;
-        }
+    function importarExcel(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+            XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1}).forEach(linha => { if(linha[0]) adicionarAoPoolDOM(linha[0]); });
+            salvarBancoLateral(); event.target.value = '';
+        };
+        reader.readAsArrayBuffer(event.target.files[0]);
     }
 
     function testarAlerta() {
-        const som = document.getElementById('somAlarme');
-        som.currentTime = 0;
-        som.play();
-        document.getElementById('boneco').innerText = "🙅‍♂️";
+        const som = document.getElementById('somAlarme'); som.currentTime = 0; som.play();
+        const visual = document.getElementById('tempo-visual');
+        const nome = document.getElementById('grupo-nome');
+        const boneco = document.getElementById('boneco');
+
+        visual.classList.add('tempo-critico');
+        nome.classList.add('texto-glitch');
+        nome.innerText = "TESTE DE ALARME GERAL!";
+        boneco.innerText = "🚨";
+        
         setTimeout(() => { 
-            document.getElementById('boneco').innerText = "📦"; 
-            som.pause();
-            som.currentTime = 0;
-        }, 4000);
+            visual.classList.remove('tempo-critico');
+            nome.classList.remove('texto-glitch');
+            boneco.innerText = "📦"; 
+            som.pause(); som.currentTime = 0;
+            atualizarLogica();
+        }, 5000);
     }
 
-    // --- LÓGICA DE TEMPO ---
     function atualizarLogica() {
         const agora = new Date();
         const horaTexto = agora.toLocaleTimeString();
-        
-        if (horaTexto !== memoriaRelogio) {
-            document.getElementById('clock').innerText = horaTexto;
-            memoriaRelogio = horaTexto;
-        }
+        if (horaTexto !== memoriaRelogio) { document.getElementById('clock').innerText = horaTexto; memoriaRelogio = horaTexto; }
 
+        const agoraMins = agora.getHours() * 60 + agora.getMinutes();
         let alguemNoCafe = false;
+
+        const visual = document.getElementById('tempo-visual');
+        const barraCircular = document.getElementById('barra-circular');
         const boneco = document.getElementById('boneco');
         const aviso = document.getElementById('aviso-saida');
+        const grupoNome = document.getElementById('grupo-nome');
 
         horariosFixos.forEach((h) => {
             const [hora, min] = h.split(':').map(Number);
             const inicio = hora * 60 + min;
             const fim = inicio + 10;
-            const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
-            const slotBox = document.getElementById(`box-${h}`);
-            if(!slotBox) return;
+            const box = document.getElementById(`box-${h}`);
+            if(!box) return;
 
-            if (agoraMinutos >= inicio && agoraMinutos < fim) {
+            if (agoraMins >= inicio && agoraMins < fim) {
                 alguemNoCafe = true;
-                
-                if (!slotBox.classList.contains('active-row')) slotBox.classList.add('active-row');
+                box.classList.add('active-row');
                 
                 const nomes = (dadosEscala[h] && dadosEscala[h].length > 0) ? dadosEscala[h].join(', ') : "EQUIPE NÃO DEFINIDA";
-                if (document.getElementById('grupo-nome').innerText !== nomes) {
-                    document.getElementById('grupo-nome').innerText = nomes;
-                }
+                if (!grupoNome.classList.contains('texto-glitch')) grupoNome.innerText = nomes;
 
-                if (agoraMinutos === fim - 1) { 
-                    if (!memoriaAviso) {
-                        aviso.style.display = "block";
-                        boneco.innerText = "🙅‍♂️";
-                        boneco.classList.add('alert-mode');
-                        memoriaAviso = true;
-                    }
-                    
-                    if (agora.getSeconds() % 10 === 0) { 
-                        dispararAlarme(); 
-                    } else {
-                        audioDisparado = false; 
-                    }
-                } 
-                else if (agoraMinutos === inicio && agora.getSeconds() < 15) {
-                    boneco.innerText = "🚶‍♂️➡️☕"; boneco.classList.remove('alert-mode'); aviso.style.display = "none"; memoriaAviso = false;
-                } 
-                else {
-                    boneco.innerText = "☕"; boneco.classList.remove('alert-mode'); aviso.style.display = "none"; memoriaAviso = false;
+                let segsPassados = ((agoraMins - inicio) * 60) + agora.getSeconds();
+                let porcentagem = segsPassados / 600; 
+                let offset = 440 - (porcentagem * 440); 
+                barraCircular.style.strokeDashoffset = offset;
+
+                if (agoraMins === fim - 1) { 
+                    visual.classList.add('tempo-critico');
+                    grupoNome.classList.add('texto-glitch');
+                    aviso.style.display = "block";
+                    boneco.innerText = "🚨";
+                    if (agora.getSeconds() % 10 === 0) document.getElementById('somAlarme').play();
+                } else if (agoraMins === inicio && agora.getSeconds() < 10) {
+                    boneco.innerText = "👷‍♂️"; visual.classList.remove('tempo-critico'); grupoNome.classList.remove('texto-glitch'); aviso.style.display = "none";
+                } else {
+                    boneco.innerText = "☕"; visual.classList.remove('tempo-critico'); grupoNome.classList.remove('texto-glitch'); aviso.style.display = "none";
                 }
             } else {
-                if (slotBox.classList.contains('active-row')) slotBox.classList.remove('active-row');
+                box.classList.remove('active-row');
             }
         });
 
         if (!alguemNoCafe) {
-            if (document.getElementById('grupo-nome').innerText !== "NENHUMA EQUIPE NO CAFÉ") {
-                document.getElementById('grupo-nome').innerText = "NENHUMA EQUIPE NO CAFÉ";
-                boneco.innerText = "📦"; 
-                aviso.style.display = "none"; 
-                boneco.classList.remove('alert-mode'); 
-                memoriaAviso = false;
-            }
+            // Frase encurtada para não quebrar no layout Modo TV
+            grupoNome.innerText = "NENHUMA EQUIPE NO CAFÉ";
+            grupoNome.classList.remove('texto-glitch');
+            boneco.innerText = "📦"; aviso.style.display = "none"; visual.classList.remove('tempo-critico');
+            barraCircular.style.strokeDashoffset = 440; 
         }
     }
 </script>
