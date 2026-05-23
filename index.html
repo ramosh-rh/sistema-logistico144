@@ -3,87 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Painel de Controle de Pausas</title>
+    <title>Logística - Painel Interativo de Pausas</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- ESTILO INDUSTRIAL FUTURISTA (CYBERPUNK) --- */
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #050509; color: #a2aab3; margin: 0; display: flex; height: 100vh; overflow: hidden; transition: background 0.3s; }
+        /* --- ESTILO FUTURISTA ANIMADO --- */
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(-45deg, #050509, #0a0e14, #08121c, #050509); background-size: 400% 400%; animation: gradientShift 15s ease infinite; color: #a2aab3; margin: 0; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0a0e14; }
         ::-webkit-scrollbar-thumb { background: #00f2fe; border-radius: 3px; }
 
         /* --- BARRA LATERAL --- */
-        .sidebar { width: 300px; background: #0a0e14; border-right: 2px solid #1f293a; display: flex; flex-direction: column; padding: 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.7); z-index: 10; transition: 0.3s; }
-        .sidebar h2 { color: #00f2fe; font-size: 1.1em; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; text-shadow: 0 0 10px rgba(0, 242, 254, 0.5); }
+        .sidebar { width: 300px; background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(10px); border-right: 2px solid #1f293a; display: flex; flex-direction: column; padding: 20px; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 10; transition: 0.3s; }
+        .sidebar h2 { color: #00f2fe; font-size: 1.1em; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; text-shadow: 0 0 10px rgba(0, 242, 254, 0.8); }
         
         .box-inclusao { display: flex; gap: 5px; margin-bottom: 15px; }
-        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 4px; border: 1px solid #1f293a; background: #050509; color: #fff; text-transform: uppercase; outline: none; font-size: 0.85em; }
-        .box-inclusao input:focus { border-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.3); }
-        .box-inclusao button { background: #00f2fe; color: #050509; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1.1em; transition: 0.2s; }
-        .box-inclusao button:hover { background: #4facfe; }
+        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #1f293a; background: #050509; color: #fff; text-transform: uppercase; outline: none; transition: 0.3s; }
+        .box-inclusao input:focus { border-color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); transform: scale(1.02); }
+        .box-inclusao button { background: #00f2fe; color: #050509; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1.2em; transition: 0.2s; }
+        .box-inclusao button:hover { background: #4facfe; transform: scale(1.1); box-shadow: 0 0 15px #00f2fe; }
         
-        #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: #080a10; border-radius: 6px; padding: 8px; border: 1px solid #1f293a; }
-        .funcionario-item { background: #10141d; margin: 5px 0; padding: 10px; border-radius: 4px; cursor: grab; border-left: 3px solid #1f293a; font-size: 0.85em; color: #fff; font-weight: 500; transition: 0.2s; }
-        .funcionario-item:hover { border-left-color: #00f2fe; background: #161b27; box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
+        #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: rgba(8, 10, 16, 0.6); border-radius: 8px; padding: 8px; border: 1px solid #1f293a; }
+        .funcionario-item { background: #10141d; margin: 6px 0; padding: 12px; border-radius: 6px; cursor: grab; border-left: 3px solid #1f293a; font-size: 0.85em; color: #fff; font-weight: 500; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .funcionario-item:hover { border-left-color: #00f2fe; background: #161b27; transform: translateX(5px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.2); }
 
         /* --- PAINEL PRINCIPAL --- */
-        .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; background: radial-gradient(circle at center, #0d121a, #050509); position: relative; transition: 0.3s;}
+        .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; position: relative; transition: 0.3s;}
         .container { flex-grow: 1; display: flex; flex-direction: column; max-width: 1200px; margin: auto; width: 100%; transition: 0.3s; }
         
-        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1f293a; padding-bottom: 15px; margin-bottom: 20px; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(31, 41, 58, 0.5); padding-bottom: 15px; margin-bottom: 20px; }
         .botoes-topo { display: flex; gap: 10px; }
-        #clock { font-size: 3em; font-weight: 200; color: #fff; font-family: 'Monaco', 'Courier New', monospace; letter-spacing: 3px; text-shadow: 0 0 15px rgba(255,255,255,0.3); transition: 0.3s; }
-        .titulo-painel { text-transform: uppercase; letter-spacing: 3px; color: #ff9900; font-weight: bold; font-size: 1.2em; text-shadow: 0 0 10px rgba(255,153,0,0.3); }
+        #clock { font-size: 3.5em; font-weight: 900; color: #fff; font-family: 'Monaco', 'Courier New', monospace; letter-spacing: 2px; text-shadow: 0 0 20px rgba(0, 242, 254, 0.5); transition: 0.3s; }
+        .titulo-painel { text-transform: uppercase; letter-spacing: 4px; color: #ff9900; font-weight: 900; font-size: 1.2em; text-shadow: 0 0 15px rgba(255,153,0,0.5); }
 
-        /* QUADRO PRINCIPAL */
-        .status-card { background: #0a0e14; border: 1px solid #1f293a; border-radius: 12px; padding: 30px; display: flex; align-items: center; gap: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; overflow: hidden; transition: 0.3s; }
-        .status-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #4facfe, #00f2fe); }
+        /* QUADRO PRINCIPAL COM EFEITO RADAR */
+        @keyframes scanline { 0% { top: -5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 105%; opacity: 0; } }
         
-        .info-grupo { flex-grow: 1; text-align: left; }
+        .status-card { background: rgba(10, 14, 20, 0.8); backdrop-filter: blur(5px); border: 1px solid #1f293a; border-radius: 15px; padding: 30px; display: flex; align-items: center; gap: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; overflow: hidden; transition: 0.3s; }
+        
+        /* Linha Laser do Radar */
+        .status-card::after { content: ''; position: absolute; left: 0; width: 100%; height: 5px; background: rgba(0, 242, 254, 0.5); box-shadow: 0 0 20px rgba(0, 242, 254, 0.8); opacity: 0; animation: scanline 4s linear infinite; z-index: 1; pointer-events: none;}
+        
+        .status-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #4facfe, #00f2fe); }
+        
+        .info-grupo { flex-grow: 1; text-align: left; z-index: 2;}
         .label-status { font-size: 0.9em; color: #5c6773; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; transition: 0.3s; }
-        .nomes-ativos { font-size: 2.2em; color: #fff; font-weight: 800; text-transform: uppercase; margin: 10px 0; line-height: 1.2; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); min-height: 1.2em; transition: 0.3s;}
-        .aviso-saida { font-size: 1.5em; color: #ff3333; font-weight: bold; display: none; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; transition: 0.3s;}
+        .nomes-ativos { font-size: 2.2em; color: #fff; font-weight: 900; text-transform: uppercase; margin: 10px 0; line-height: 1.2; text-shadow: 0px 4px 10px rgba(0,0,0,0.8); min-height: 1.2em; transition: 0.3s;}
+        .aviso-saida { font-size: 1.5em; color: #ff3333; font-weight: 900; display: none; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; transition: 0.3s;}
 
-        /* ANIMAÇÃO DO MASCOTE E TEMPO CIRCULAR */
-        .tempo-container { position: relative; width: 150px; height: 150px; flex-shrink: 0; transition: 0.3s; overflow: visible; }
+        /* --- ANIMAÇÕES DO MASCOTE VIVO --- */
+        .tempo-container { position: relative; width: 160px; height: 160px; flex-shrink: 0; transition: 0.3s; overflow: visible; z-index: 2;}
         .circulo-svg { transform: rotate(-90deg); width: 100%; height: 100%; overflow: visible; }
-        .circulo-fundo { fill: none; stroke: #1f293a; stroke-width: 8; }
-        .circulo-progresso { fill: none; stroke: #00f2fe; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear, stroke 0.5s; filter: drop-shadow(0 0 8px #00f2fe); }
-        .mascote-logistica { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; transition: 0.3s; }
-
-        @keyframes pulsar-vermelho { 0% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } 50% { filter: drop-shadow(0 0 25px #ff0000); stroke: #ff0000; } 100% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } }
-        .tempo-critico .circulo-progresso { animation: pulsar-vermelho 1s infinite; }
+        .circulo-fundo { fill: none; stroke: rgba(31, 41, 58, 0.5); stroke-width: 8; }
+        .circulo-progresso { fill: none; stroke: #00f2fe; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear, stroke 0.5s; filter: drop-shadow(0 0 10px #00f2fe); }
         
-        @keyframes glitch { 0%, 40%, 80%, 100% { text-shadow: 2px 0 #ff3333, -2px 0 #00f2fe; } 20%, 60% { text-shadow: -2px 0 #ff3333, 2px 0 #00f2fe; } }
+        .mascote-logistica { position: absolute; top: 50%; left: 50%; font-size: 65px; text-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+
+        /* Comportamentos do Boneco */
+        @keyframes floatRelax { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, -65%); } }
+        @keyframes walkTrans { 0%, 100% { transform: translate(-50%, -50%) rotate(-10deg); } 50% { transform: translate(-40%, -50%) rotate(10deg); } }
+        @keyframes runPanic { 0%, 100% { transform: translate(-50%, -50%) scale(1.2); } 50% { transform: translate(-45%, -50%) scale(1.3) rotate(15deg); } }
+        
+        .mascote-relax { animation: floatRelax 3s ease-in-out infinite; }
+        .mascote-walk { animation: walkTrans 1s steps(2, end) infinite; }
+        .mascote-run { animation: runPanic 0.2s linear infinite; filter: drop-shadow(0 0 15px #ff0000); }
+
+        @keyframes pulsar-vermelho { 0% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } 50% { filter: drop-shadow(0 0 30px #ff0000); stroke: #ff0000; } 100% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } }
+        .tempo-critico .circulo-progresso { animation: pulsar-vermelho 1s infinite; }
+        @keyframes glitch { 0%, 40%, 80%, 100% { text-shadow: 3px 0 #ff3333, -3px 0 #00f2fe; } 20%, 60% { text-shadow: -3px 0 #ff3333, 3px 0 #00f2fe; } }
         .texto-glitch { animation: glitch 0.3s steps(2, start) infinite; color: #ffeb3b !important; }
 
         /* GRADE DE HORÁRIOS */
-        .grid-horarios { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: auto; padding-bottom: 10px; transition: 0.3s; }
-        .slot-horario { background: #0a0e14; border: 1px solid #1f293a; border-radius: 8px; padding: 12px; text-align: left; transition: 0.2s; position: relative; opacity: 0.6; }
-        .slot-horario.active-row { border-color: #00f2fe; background: #0d1a24; opacity: 1; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2); transform: scale(1.02); z-index: 5;}
-        .slot-header { font-size: 1.1em; font-weight: bold; color: #00f2fe; margin-bottom: 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #1f293a; padding-bottom: 5px; transition: 0.3s;}
-        .slot-nomes { font-size: 0.75em; color: #c5c6c7; min-height: 35px; display: flex; flex-wrap: wrap; gap: 4px; transition: 0.3s; }
-        .nome-tag { background: #10141d; padding: 3px 6px; border-radius: 3px; border: 1px solid #1f293a; transition: 0.3s;}
+        .grid-horarios { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: auto; padding-bottom: 10px; transition: 0.3s; }
+        .slot-horario { background: rgba(10, 14, 20, 0.7); border: 1px solid #1f293a; border-radius: 10px; padding: 15px; text-align: left; transition: all 0.3s ease; position: relative; opacity: 0.6; backdrop-filter: blur(5px); }
+        .slot-horario:hover { transform: translateY(-5px); border-color: rgba(0, 242, 254, 0.5); opacity: 0.9; }
+        .slot-horario.active-row { border-color: #00f2fe; background: rgba(13, 26, 36, 0.9); opacity: 1; box-shadow: 0 10px 25px rgba(0, 242, 254, 0.2); transform: scale(1.03); z-index: 5;}
+        .slot-header { font-size: 1.1em; font-weight: 900; color: #00f2fe; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(31, 41, 58, 0.5); padding-bottom: 8px; transition: 0.3s;}
+        .slot-nomes { font-size: 0.75em; color: #e0e0e0; min-height: 35px; display: flex; flex-wrap: wrap; gap: 5px; transition: 0.3s; }
+        .nome-tag { background: #10141d; padding: 4px 8px; border-radius: 4px; border: 1px solid #1f293a; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
 
         /* Botões */
-        .btn-acao { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #050509; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; transition: 0.2s; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.3); }
-        .btn-acao:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 242, 254, 0.4); }
-        .btn-secundario { background: #10141d; color: #a2aab3; border: 1px solid #1f293a; box-shadow: none; margin-bottom: 15px; }
-        .btn-secundario:hover { background: #1f293a; color: #fff; }
-        .btn-pequeno { width: auto; font-size: 0.8em; }
-        .btn-teste { background: #ff3333; color: #fff; box-shadow: none; }
-        .btn-teste:hover { background: #cc0000; box-shadow: none; }
+        .btn-acao { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #050509; border: none; padding: 12px 18px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); }
+        .btn-acao:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
+        .btn-secundario { background: #10141d; color: #00f2fe; border: 1px solid #1f293a; box-shadow: none; margin-bottom: 15px; }
+        .btn-secundario:hover { background: rgba(0, 242, 254, 0.1); border-color: #00f2fe; color: #fff; }
+        .btn-pequeno { width: auto; font-size: 0.9em; padding: 10px 20px;}
+        .btn-teste { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: #fff; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4); }
+        .btn-teste:hover { box-shadow: 0 8px 25px rgba(255, 65, 108, 0.6); }
         
-        #btn-sair-tv { display: none; position: fixed; top: 15px; right: 15px; z-index: 9999; background: #ff3333; color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.2em; opacity: 0.2; transition: 0.3s; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
-        #btn-sair-tv:hover { opacity: 1; }
+        #btn-sair-tv { display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; background: #ff3333; color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 1.2em; opacity: 0.1; transition: 0.3s; box-shadow: 0 0 25px rgba(255,0,0,0.6); }
+        #btn-sair-tv:hover { opacity: 1; transform: scale(1.05);}
 
         /* ========================================= */
-        /*              MODO TV ATIVADO              */
+        /* MODO TV ATIVADO              */
         /* ========================================= */
         body.tv-mode .sidebar { display: none !important; }
         body.tv-mode .botoes-topo { display: none !important; }
@@ -93,32 +111,32 @@
         body.tv-mode .container { max-width: 98vw; justify-content: space-between; height: 96vh; }
         
         body.tv-mode .dash-header { margin-bottom: 1vh; padding-bottom: 1vh; }
-        body.tv-mode #clock { font-size: 6vh; }
+        body.tv-mode #clock { font-size: 7vh; }
         body.tv-mode .titulo-painel { font-size: 3vh; }
 
-        body.tv-mode .status-card { padding: 4vh 4vw; margin: 1vh 0 2vh 0; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        body.tv-mode .tempo-container { width: 20vh; height: 20vh; }
-        body.tv-mode .mascote-logistica { font-size: 8vh; }
+        body.tv-mode .status-card { padding: 4vh 4vw; margin: 1vh 0 2vh 0; box-shadow: 0 15px 50px rgba(0,0,0,0.9); }
+        body.tv-mode .tempo-container { width: 22vh; height: 22vh; }
+        body.tv-mode .mascote-logistica { font-size: 9vh; }
         
         body.tv-mode .info-grupo { margin-left: 2vw; }
-        body.tv-mode .label-status { font-size: 2vh; }
-        body.tv-mode .nomes-ativos { font-size: 4.5vh; margin: 1vh 0; line-height: 1.1; }
-        body.tv-mode .aviso-saida { font-size: 3.5vh; margin-top: 1vh; }
+        body.tv-mode .label-status { font-size: 2.2vh; }
+        body.tv-mode .nomes-ativos { font-size: 5vh; margin: 1.5vh 0; line-height: 1.1; }
+        body.tv-mode .aviso-saida { font-size: 3.5vh; margin-top: 1.5vh; }
 
         body.tv-mode .grid-horarios { gap: 1vw; margin-top: 1vh; padding-bottom: 1vh; }
-        body.tv-mode .slot-horario { padding: 1.5vh 1vw; }
-        body.tv-mode .slot-header { font-size: 2.2vh; margin-bottom: 1vh; }
-        body.tv-mode .slot-nomes { font-size: 1.6vh; gap: 0.5vw; min-height: 4vh; }
-        body.tv-mode .nome-tag { padding: 0.5vh 0.8vw; }
+        body.tv-mode .slot-horario { padding: 2vh 1vw; }
+        body.tv-mode .slot-header { font-size: 2.5vh; margin-bottom: 1.5vh; }
+        body.tv-mode .slot-nomes { font-size: 1.8vh; gap: 0.6vw; min-height: 4.5vh; }
+        body.tv-mode .nome-tag { padding: 0.6vh 1vw; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>📡 PAINEL DE CONTROLE</h2>
+    <h2>📡 COMANDO LOGÍSTICA</h2>
     <div class="box-inclusao">
         <input type="text" id="novoNome" placeholder="NOME DO OPERADOR" autocomplete="off">
-        <button onclick="adicionarNomeManual()">+</button>
+        <button onclick="adicionarNomeManual()" title="Adicionar Operador">+</button>
     </div>
     <input type="file" id="inputExcel" accept=".xlsx, .xls" style="display: none;" onchange="importarExcel(event)">
     <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 IMPORTAR EXCEL</button>
@@ -130,7 +148,7 @@
     <div class="container">
         
         <div class="dash-header">
-            <div class="titulo-painel">Monitoramento de Pausas</div>
+            <div class="titulo-painel">Monitoramento de Operações</div>
             <div id="clock">00:00:00</div>
             <div class="botoes-topo">
                 <button class="btn-acao btn-pequeno btn-teste" onclick="testarAlerta()">🚨 TESTAR</button>
@@ -140,18 +158,17 @@
 
         <div class="status-card" id="card-principal">
             <div class="tempo-container" id="tempo-visual">
-                <!-- ViewBox aumentado de 160 para 190 para o efeito de brilho não ser cortado nas pontas -->
                 <svg class="circulo-svg" viewBox="-15 -15 190 190">
                     <circle class="circulo-fundo" cx="80" cy="80" r="70"></circle>
                     <circle class="circulo-progresso" id="barra-circular" cx="80" cy="80" r="70"></circle>
                 </svg>
-                <div class="mascote-logistica" id="boneco">📦</div>
+                <div class="mascote-logistica mascote-relax" id="boneco">👷‍♂️☕</div>
             </div>
 
             <div class="info-grupo">
-                <div class="label-status">Equipe em Pausa Ativa:</div>
-                <div id="grupo-nome" class="nomes-ativos">CARREGANDO DADOS...</div>
-                <div id="aviso-saida" class="aviso-saida">⚠️ TEMPO ESGOTADO - RETORNAR AO SETOR ⚠️</div>
+                <div class="label-status">Esquadrão em Pausa Ativa:</div>
+                <div id="grupo-nome" class="nomes-ativos">SINCRONIZANDO...</div>
+                <div id="aviso-saida" class="aviso-saida">⚠️ TEMPO ESGOTADO - RETORNAR À OPERAÇÃO ⚠️</div>
             </div>
         </div>
 
@@ -195,11 +212,8 @@
         }
     }
 
-    // Identifica se a tela cheia foi cancelada pela tecla ESC
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) {
-            document.body.classList.remove('tv-mode');
-        }
+        if (!document.fullscreenElement) { document.body.classList.remove('tv-mode'); }
     });
 
     document.getElementById("novoNome").addEventListener("keypress", function(e) { if (e.key === "Enter") adicionarNomeManual(); });
@@ -282,13 +296,17 @@
 
         visual.classList.add('tempo-critico');
         nome.classList.add('texto-glitch');
-        nome.innerText = "TESTE DE ALARME GERAL!";
-        boneco.innerText = "🚨";
+        nome.innerText = "SIMULAÇÃO DE EMERGÊNCIA!";
+        
+        // Troca o boneco e a animação para pânico
+        boneco.innerText = "🏃‍♂️💨";
+        boneco.className = "mascote-logistica mascote-run";
         
         setTimeout(() => { 
             visual.classList.remove('tempo-critico');
             nome.classList.remove('texto-glitch');
             boneco.innerText = "📦"; 
+            boneco.className = "mascote-logistica";
             som.pause(); som.currentTime = 0;
             atualizarLogica();
         }, 5000);
@@ -328,15 +346,27 @@
                 barraCircular.style.strokeDashoffset = offset;
 
                 if (agoraMins === fim - 1) { 
+                    // MINUTO FINAL: Pânico
                     visual.classList.add('tempo-critico');
                     grupoNome.classList.add('texto-glitch');
                     aviso.style.display = "block";
-                    boneco.innerText = "🚨";
+                    boneco.innerText = "🏃‍♂️💨";
+                    boneco.className = "mascote-logistica mascote-run";
                     if (agora.getSeconds() % 10 === 0) document.getElementById('somAlarme').play();
-                } else if (agoraMins === inicio && agora.getSeconds() < 10) {
-                    boneco.innerText = "👷‍♂️"; visual.classList.remove('tempo-critico'); grupoNome.classList.remove('texto-glitch'); aviso.style.display = "none";
+                } else if (agoraMins === inicio && agora.getSeconds() < 15) {
+                    // TRANSIÇÃO (Primeiros 15s): Andando
+                    boneco.innerText = "🚶‍♂️📦"; 
+                    boneco.className = "mascote-logistica mascote-walk";
+                    visual.classList.remove('tempo-critico'); 
+                    grupoNome.classList.remove('texto-glitch'); 
+                    aviso.style.display = "none";
                 } else {
-                    boneco.innerText = "☕"; visual.classList.remove('tempo-critico'); grupoNome.classList.remove('texto-glitch'); aviso.style.display = "none";
+                    // TEMPO NORMAL: Relax/Café
+                    boneco.innerText = "👷‍♂️☕"; 
+                    boneco.className = "mascote-logistica mascote-relax";
+                    visual.classList.remove('tempo-critico'); 
+                    grupoNome.classList.remove('texto-glitch'); 
+                    aviso.style.display = "none";
                 }
             } else {
                 box.classList.remove('active-row');
@@ -344,10 +374,12 @@
         });
 
         if (!alguemNoCafe) {
-            // Frase encurtada para não quebrar no layout Modo TV
             grupoNome.innerText = "NENHUMA EQUIPE NO CAFÉ";
             grupoNome.classList.remove('texto-glitch');
-            boneco.innerText = "📦"; aviso.style.display = "none"; visual.classList.remove('tempo-critico');
+            boneco.innerText = "📦"; 
+            boneco.className = "mascote-logistica mascote-relax";
+            aviso.style.display = "none"; 
+            visual.classList.remove('tempo-critico');
             barraCircular.style.strokeDashoffset = 440; 
         }
     }
