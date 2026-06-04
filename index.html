@@ -3,184 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logística - Painel Interativo de Pausas</title>
+    <title>Logística - Gestão de Pausas</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* --- ESTILO FUTURISTA ANIMADO --- */
+        /* --- ESTILO BASE --- */
         @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(-45deg, #050509, #0a0e14, #08121c, #050509); background-size: 400% 400%; animation: gradientShift 15s ease infinite; color: #a2aab3; margin: 0; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: linear-gradient(-45deg, #050509, #0a0e14, #08121c, #050509); 
+            background-size: 400% 400%; 
+            animation: gradientShift 15s ease infinite; 
+            color: #a2aab3; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0a0e14; }
         ::-webkit-scrollbar-thumb { background: #00f2fe; border-radius: 3px; }
 
-        /* --- BARRA LATERAL --- */
-        .sidebar { width: 300px; background: rgba(10, 14, 20, 0.85); backdrop-filter: blur(10px); border-right: 2px solid #1f293a; display: flex; flex-direction: column; padding: 20px; box-shadow: 5px 0 20px rgba(0,0,0,0.8); z-index: 10; transition: 0.3s; }
-        .sidebar h2 { color: #00f2fe; font-size: 1.1em; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; text-shadow: 0 0 10px rgba(0, 242, 254, 0.8); }
+        /* --- NAVEGAÇÃO --- */
+        .nav-bar {
+            background: rgba(10, 14, 20, 0.9);
+            border-bottom: 2px solid #1f293a;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 100;
+        }
+        .nav-btn {
+            background: transparent;
+            border: 1px solid #00f2fe;
+            color: #00f2fe;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .nav-btn.active {
+            background: #00f2fe;
+            color: #050509;
+        }
+        .nav-btn:hover {
+            box-shadow: 0 0 10px #00f2fe;
+        }
+
+        /* --- VIEWS --- */
+        .view {
+            display: none;
+            flex-grow: 1;
+            height: calc(100vh - 60px);
+        }
+        .view.active {
+            display: flex;
+        }
+
+        /* --- ADMIN VIEW --- */
+        .sidebar { 
+            width: 320px; 
+            background: rgba(10, 14, 20, 0.85); 
+            backdrop-filter: blur(10px); 
+            border-right: 2px solid #1f293a; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+            box-shadow: 5px 0 20px rgba(0,0,0,0.8); 
+        }
+        .sidebar h2 { color: #00f2fe; font-size: 1.1em; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-top: 0; }
         
         .box-inclusao { display: flex; gap: 5px; margin-bottom: 15px; }
-        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #1f293a; background: #050509; color: #fff; text-transform: uppercase; outline: none; transition: 0.3s; }
-        .box-inclusao input:focus { border-color: #00f2fe; box-shadow: 0 0 15px rgba(0, 242, 254, 0.4); transform: scale(1.02); }
-        .box-inclusao button { background: #00f2fe; color: #050509; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1.2em; transition: 0.2s; }
-        .box-inclusao button:hover { background: #4facfe; transform: scale(1.1); box-shadow: 0 0 15px #00f2fe; }
+        .box-inclusao input { flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #1f293a; background: #050509; color: #fff; text-transform: uppercase; outline: none; }
+        .box-inclusao input:focus { border-color: #00f2fe; box-shadow: 0 0 10px rgba(0, 242, 254, 0.4); }
+        .box-inclusao button { background: #00f2fe; color: #050509; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; padding: 0 15px; font-size: 1.2em; }
         
-        #lista-disponiveis { flex-grow: 1; overflow-y: auto; background: rgba(8, 10, 16, 0.6); border-radius: 8px; padding: 8px; border: 1px solid #1f293a; }
-        .funcionario-item { background: #10141d; margin: 6px 0; padding: 12px; border-radius: 6px; cursor: grab; border-left: 3px solid #1f293a; font-size: 0.85em; color: #fff; font-weight: 500; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .funcionario-item:hover { border-left-color: #00f2fe; background: #161b27; transform: translateX(5px); box-shadow: 0 5px 15px rgba(0, 242, 254, 0.2); }
+        #lista-disponiveis { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            background: rgba(8, 10, 16, 0.6); 
+            border-radius: 8px; 
+            padding: 8px; 
+            border: 1px solid #1f293a; 
+        }
+        .funcionario-item { 
+            background: #10141d; 
+            margin: 6px 0; 
+            padding: 12px; 
+            border-radius: 6px; 
+            cursor: grab; 
+            border-left: 3px solid #1f293a; 
+            font-size: 0.85em; 
+            color: #fff; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .funcionario-item:hover { border-left-color: #00f2fe; background: #161b27; }
+        .btn-delete-small {
+            background: transparent;
+            color: #ff3333;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 0 5px;
+        }
 
-        /* --- PAINEL PRINCIPAL --- */
-        .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; position: relative; transition: 0.3s;}
-        .container { flex-grow: 1; display: flex; flex-direction: column; max-width: 1200px; margin: auto; width: 100%; transition: 0.3s; }
+        /* --- DISPLAY VIEW & SHARED --- */
+        .main-content { flex-grow: 1; padding: 25px; display: flex; flex-direction: column; position: relative; overflow-y: auto; }
+        .container { flex-grow: 1; display: flex; flex-direction: column; max-width: 1200px; margin: auto; width: 100%; }
         
         .dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(31, 41, 58, 0.5); padding-bottom: 15px; margin-bottom: 20px; }
-        .botoes-topo { display: flex; gap: 10px; }
-        #clock { font-size: 3.5em; font-weight: 900; color: #fff; font-family: 'Monaco', 'Courier New', monospace; letter-spacing: 2px; text-shadow: 0 0 20px rgba(0, 242, 254, 0.5); transition: 0.3s; }
-        .titulo-painel { text-transform: uppercase; letter-spacing: 4px; color: #ff9900; font-weight: 900; font-size: 1.2em; text-shadow: 0 0 15px rgba(255,153,0,0.5); }
+        #clock { font-size: 3.5em; font-weight: 900; color: #fff; font-family: monospace; text-shadow: 0 0 20px rgba(0, 242, 254, 0.5); }
+        .titulo-painel { text-transform: uppercase; letter-spacing: 4px; color: #ff9900; font-weight: 900; font-size: 1.2em; }
 
-        /* QUADRO PRINCIPAL COM EFEITO RADAR */
-        @keyframes scanline { 0% { top: -5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 105%; opacity: 0; } }
-        
-        .status-card { background: rgba(10, 14, 20, 0.8); backdrop-filter: blur(5px); border: 1px solid #1f293a; border-radius: 15px; padding: 30px; display: flex; align-items: center; gap: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; overflow: hidden; transition: 0.3s; }
-        
-        /* Linha Laser do Radar */
-        .status-card::after { content: ''; position: absolute; left: 0; width: 100%; height: 5px; background: rgba(0, 242, 254, 0.5); box-shadow: 0 0 20px rgba(0, 242, 254, 0.8); opacity: 0; animation: scanline 4s linear infinite; z-index: 1; pointer-events: none;}
-        
+        .status-card { 
+            background: rgba(10, 14, 20, 0.8); 
+            backdrop-filter: blur(5px); 
+            border: 1px solid #1f293a; 
+            border-radius: 15px; 
+            padding: 30px; 
+            display: flex; 
+            align-items: center; 
+            gap: 30px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+            position: relative; 
+            overflow: hidden; 
+            margin-bottom: 20px;
+        }
         .status-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #4facfe, #00f2fe); }
         
-        .info-grupo { flex-grow: 1; text-align: left; z-index: 2;}
-        .label-status { font-size: 0.9em; color: #5c6773; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; transition: 0.3s; }
-        .nomes-ativos { font-size: 2.2em; color: #fff; font-weight: 900; text-transform: uppercase; margin: 10px 0; line-height: 1.2; text-shadow: 0px 4px 10px rgba(0,0,0,0.8); min-height: 1.2em; transition: 0.3s;}
-        .aviso-saida { font-size: 1.5em; color: #ff3333; font-weight: 900; display: none; text-transform: uppercase; letter-spacing: 2px; margin-top: 10px; transition: 0.3s;}
+        .info-grupo { flex-grow: 1; text-align: left; }
+        .label-status { font-size: 0.9em; color: #5c6773; text-transform: uppercase; letter-spacing: 2px; font-weight: bold; }
+        .nomes-ativos { font-size: 2.2em; color: #fff; font-weight: 900; text-transform: uppercase; margin: 10px 0; min-height: 1.2em; }
+        .aviso-saida { font-size: 1.5em; color: #ff3333; font-weight: 900; display: none; text-transform: uppercase; margin-top: 10px; }
 
-        /* --- ANIMAÇÕES DO MASCOTE VIVO --- */
-        .tempo-container { position: relative; width: 160px; height: 160px; flex-shrink: 0; transition: 0.3s; overflow: visible; z-index: 2;}
-        .circulo-svg { transform: rotate(-90deg); width: 100%; height: 100%; overflow: visible; }
+        .tempo-container { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+        .circulo-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
         .circulo-fundo { fill: none; stroke: rgba(31, 41, 58, 0.5); stroke-width: 8; }
-        .circulo-progresso { fill: none; stroke: #00f2fe; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear, stroke 0.5s; filter: drop-shadow(0 0 10px #00f2fe); }
-        
-        .mascote-logistica { position: absolute; top: 50%; left: 50%; font-size: 65px; text-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .circulo-progresso { fill: none; stroke: #00f2fe; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 440; transition: stroke-dashoffset 1s linear; filter: drop-shadow(0 0 10px #00f2fe); }
+        .mascote-logistica { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 65px; }
 
-        /* Comportamentos do Boneco */
-        @keyframes floatRelax { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, -65%); } }
-        @keyframes walkTrans { 0%, 100% { transform: translate(-50%, -50%) rotate(-10deg); } 50% { transform: translate(-40%, -50%) rotate(10deg); } }
-        @keyframes runPanic { 0%, 100% { transform: translate(-50%, -50%) scale(1.2); } 50% { transform: translate(-45%, -50%) scale(1.3) rotate(15deg); } }
-        
-        .mascote-relax { animation: floatRelax 3s ease-in-out infinite; }
-        .mascote-walk { animation: walkTrans 1s steps(2, end) infinite; }
-        .mascote-run { animation: runPanic 0.2s linear infinite; filter: drop-shadow(0 0 15px #ff0000); }
+        /* GRID */
+        .grid-horarios { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .slot-horario { background: rgba(10, 14, 20, 0.7); border: 1px solid #1f293a; border-radius: 10px; padding: 15px; min-height: 100px; transition: 0.3s; }
+        .slot-horario.active-row { border-color: #00f2fe; background: rgba(13, 26, 36, 0.9); transform: scale(1.03); z-index: 5; box-shadow: 0 0 20px rgba(0, 242, 254, 0.3); }
+        .slot-header { font-size: 1.1em; font-weight: 900; color: #00f2fe; margin-bottom: 10px; border-bottom: 1px solid rgba(31, 41, 58, 0.5); padding-bottom: 8px; }
+        .slot-nomes { display: flex; flex-wrap: wrap; gap: 5px; }
+        .nome-tag { 
+            background: #10141d; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            border: 1px solid #1f293a; 
+            font-size: 0.8em; 
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-remove-tag {
+            background: transparent;
+            border: none;
+            color: #ff3333;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0 2px;
+        }
 
-        @keyframes pulsar-vermelho { 0% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } 50% { filter: drop-shadow(0 0 30px #ff0000); stroke: #ff0000; } 100% { filter: drop-shadow(0 0 5px #ff3333); stroke: #ff3333; } }
+        /* ANIMAÇÕES */
+        @keyframes pulsar-vermelho { 0% { stroke: #ff3333; } 50% { stroke: #ff0000; filter: drop-shadow(0 0 15px #ff0000); } 100% { stroke: #ff3333; } }
         .tempo-critico .circulo-progresso { animation: pulsar-vermelho 1s infinite; }
-        @keyframes glitch { 0%, 40%, 80%, 100% { text-shadow: 3px 0 #ff3333, -3px 0 #00f2fe; } 20%, 60% { text-shadow: -3px 0 #ff3333, 3px 0 #00f2fe; } }
-        .texto-glitch { animation: glitch 0.3s steps(2, start) infinite; color: #ffeb3b !important; }
-
-        /* GRADE DE HORÁRIOS */
-        .grid-horarios { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: auto; padding-bottom: 10px; transition: 0.3s; }
-        .slot-horario { background: rgba(10, 14, 20, 0.7); border: 1px solid #1f293a; border-radius: 10px; padding: 15px; text-align: left; transition: all 0.3s ease; position: relative; opacity: 0.6; backdrop-filter: blur(5px); }
-        .slot-horario:hover { transform: translateY(-5px); border-color: rgba(0, 242, 254, 0.5); opacity: 0.9; }
-        .slot-horario.active-row { border-color: #00f2fe; background: rgba(13, 26, 36, 0.9); opacity: 1; box-shadow: 0 10px 25px rgba(0, 242, 254, 0.2); transform: scale(1.03); z-index: 5;}
-        .slot-header { font-size: 1.1em; font-weight: 900; color: #00f2fe; margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(31, 41, 58, 0.5); padding-bottom: 8px; transition: 0.3s;}
-        .slot-nomes { font-size: 0.75em; color: #e0e0e0; min-height: 35px; display: flex; flex-wrap: wrap; gap: 5px; transition: 0.3s; }
-        .nome-tag { background: #10141d; padding: 4px 8px; border-radius: 4px; border: 1px solid #1f293a; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
-
-        /* Botões */
-        .btn-acao { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #050509; border: none; padding: 12px 18px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3); }
-        .btn-acao:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5); }
-        .btn-secundario { background: #10141d; color: #00f2fe; border: 1px solid #1f293a; box-shadow: none; margin-bottom: 15px; }
-        .btn-secundario:hover { background: rgba(0, 242, 254, 0.1); border-color: #00f2fe; color: #fff; }
-        .btn-pequeno { width: auto; font-size: 0.9em; padding: 10px 20px;}
-        .btn-teste { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: #fff; box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4); }
-        .btn-teste:hover { box-shadow: 0 8px 25px rgba(255, 65, 108, 0.6); }
         
-        #btn-sair-tv { display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; background: #ff3333; color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 1.2em; opacity: 0.1; transition: 0.3s; box-shadow: 0 0 25px rgba(255,0,0,0.6); }
-        #btn-sair-tv:hover { opacity: 1; transform: scale(1.05);}
-
-        /* ========================================= */
-        /* MODO TV ATIVADO              */
-        /* ========================================= */
-        body.tv-mode .sidebar { display: none !important; }
-        body.tv-mode .botoes-topo { display: none !important; }
-        body.tv-mode #btn-sair-tv { display: block; }
+        /* MODO TV / DISPLAY - ULTRA COMPACTO */
+        .view-display .container { max-width: 98vw; height: 98vh; justify-content: flex-start; gap: 10px; padding: 10px; margin: 0 auto; }
+        .view-display .dash-header { margin-bottom: 5px; padding-bottom: 5px; }
+        .view-display #clock-display { font-size: 2.5em; }
+        .view-display .titulo-painel { font-size: 1.2em; }
         
-        body.tv-mode .main-content { padding: 2vh 2vw; }
-        body.tv-mode .container { max-width: 98vw; justify-content: space-between; height: 96vh; }
-        
-        body.tv-mode .dash-header { margin-bottom: 1vh; padding-bottom: 1vh; }
-        body.tv-mode #clock { font-size: 7vh; }
-        body.tv-mode .titulo-painel { font-size: 3vh; }
+        .view-display .status-card { padding: 15px; margin-bottom: 10px; gap: 15px; }
+        .view-display .tempo-container { width: 80px; height: 80px; }
+        .view-display .mascote-logistica { font-size: 35px; }
+        .view-display .nomes-ativos { font-size: 1.8em; margin: 2px 0; color: #00f2fe; }
+        .view-display .label-status { font-size: 0.8em; }
+        .view-display .aviso-saida { font-size: 1.1em; margin-top: 5px; }
 
-        body.tv-mode .status-card { padding: 4vh 4vw; margin: 1vh 0 2vh 0; box-shadow: 0 15px 50px rgba(0,0,0,0.9); }
-        body.tv-mode .tempo-container { width: 22vh; height: 22vh; }
-        body.tv-mode .mascote-logistica { font-size: 9vh; }
-        
-        body.tv-mode .info-grupo { margin-left: 2vw; }
-        body.tv-mode .label-status { font-size: 2.2vh; }
-        body.tv-mode .nomes-ativos { font-size: 5vh; margin: 1.5vh 0; line-height: 1.1; }
-        body.tv-mode .aviso-saida { font-size: 3.5vh; margin-top: 1.5vh; }
+        .view-display .grid-horarios { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .view-display .slot-horario { padding: 8px; min-height: 60px; }
+        .view-display .slot-header { font-size: 0.9em; margin-bottom: 5px; }
+        .view-display .nome-tag { font-size: 0.85em; padding: 3px 8px; }
+        .view-display .btn-remove-tag { display: none; }
 
-        body.tv-mode .grid-horarios { gap: 1vw; margin-top: 1vh; padding-bottom: 1vh; }
-        body.tv-mode .slot-horario { padding: 2vh 1vw; }
-        body.tv-mode .slot-header { font-size: 2.5vh; margin-bottom: 1.5vh; }
-        body.tv-mode .slot-nomes { font-size: 1.8vh; gap: 0.6vw; min-height: 4.5vh; }
-        body.tv-mode .nome-tag { padding: 0.6vh 1vw; }
+        /* UTIL */
+        .btn-acao { background: #00f2fe; color: #050509; border: none; padding: 12px; border-radius: 6px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
+        .btn-secundario { background: #10141d; color: #00f2fe; border: 1px solid #1f293a; }
+        .drag-over { border-color: #00f2fe !important; background: rgba(0, 242, 254, 0.1) !important; }
     </style>
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>📡 COMANDO LOGÍSTICA</h2>
-    <div class="box-inclusao">
-        <input type="text" id="novoNome" placeholder="NOME DO OPERADOR" autocomplete="off">
-        <button onclick="adicionarNomeManual()" title="Adicionar Operador">+</button>
-    </div>
-    <input type="file" id="inputExcel" accept=".xlsx, .xls" style="display: none;" onchange="importarExcel(event)">
-    <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 IMPORTAR EXCEL</button>
-    
-    <div id="lista-disponiveis" ondrop="dropNoPool(event)" ondragover="allowDrop(event)"></div>
+<div class="nav-bar" id="nav-bar">
+    <button class="nav-btn active" onclick="switchView('admin')">⚙️ GESTÃO (ADMIN)</button>
+    <button class="nav-btn" onclick="switchView('display')">📺 VISUALIZAÇÃO (TV)</button>
 </div>
 
-<div class="main-content">
-    <div class="container">
+<!-- TELA DE GESTÃO -->
+<div id="view-admin" class="view active">
+    <div class="sidebar">
+        <h2>👥 FUNCIONÁRIOS</h2>
+        <div class="box-inclusao">
+            <input type="text" id="novoNome" placeholder="NOME DO OPERADOR" autocomplete="off">
+            <button onclick="adicionarNomeManual()">+</button>
+        </div>
+        <input type="file" id="inputExcel" accept=".xlsx, .xls" style="display: none;" onchange="importarExcel(event)">
+        <button class="btn-acao btn-secundario" onclick="document.getElementById('inputExcel').click()">📂 IMPORTAR EXCEL</button>
+        <button class="btn-acao btn-secundario" style="color: #ff3333; border-color: #ff3333;" onclick="limparTodosNomes()">🗑️ LIMPAR TUDO</button>
         
-        <div class="dash-header">
-            <div class="titulo-painel">Monitoramento de Operações</div>
-            <div id="clock">00:00:00</div>
-            <div class="botoes-topo">
-                <button class="btn-acao btn-pequeno btn-teste" onclick="testarAlerta()">🚨 TESTAR</button>
-                <button class="btn-acao btn-pequeno" onclick="toggleTVMode()">📺 MODO TV</button>
+        <p style="font-size: 0.7em; text-align: center; margin: 10px 0;">Arraste os nomes para os horários</p>
+        <div id="lista-disponiveis" ondrop="dropNoPool(event)" ondragover="allowDrop(event)"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="dash-header">
+                <div class="titulo-painel">Painel de Controle</div>
+                <div id="clock-admin">00:00:00</div>
             </div>
+            <div class="grid-horarios" id="grid-admin"></div>
         </div>
-
-        <div class="status-card" id="card-principal">
-            <div class="tempo-container" id="tempo-visual">
-                <svg class="circulo-svg" viewBox="-15 -15 190 190">
-                    <circle class="circulo-fundo" cx="80" cy="80" r="70"></circle>
-                    <circle class="circulo-progresso" id="barra-circular" cx="80" cy="80" r="70"></circle>
-                </svg>
-                <div class="mascote-logistica mascote-relax" id="boneco">👷‍♂️☕</div>
-            </div>
-
-            <div class="info-grupo">
-                <div class="label-status">Esquadrão em Pausa Ativa:</div>
-                <div id="grupo-nome" class="nomes-ativos">SINCRONIZANDO...</div>
-                <div id="aviso-saida" class="aviso-saida">⚠️ TEMPO ESGOTADO - RETORNAR À OPERAÇÃO ⚠️</div>
-            </div>
-        </div>
-
-        <div class="grid-horarios" id="grid-horarios"></div>
     </div>
 </div>
 
-<button id="btn-sair-tv" onclick="toggleTVMode()">❌ SAIR DO MODO TV</button>
+<!-- TELA DE VISUALIZAÇÃO (OTIMIZADA PARA PC) -->
+<div id="view-display" class="view view-display">
+    <div class="main-content">
+        <div class="container" style="justify-content: center; align-items: center; max-width: 800px;">
+            <div class="dash-header" style="width: 100%; margin-bottom: 30px; border-bottom: 2px solid #1f293a; padding-bottom: 10px;">
+                <div class="titulo-painel" style="font-size: 1.2em;">Escala de Café</div>
+                <div id="clock-display" style="font-size: 2.5em;">00:00:00</div>
+            </div>
+
+            <div class="status-card" id="card-principal" style="width: 100%; min-height: 400px; padding: 30px; flex-direction: column; text-align: center; gap: 20px; overflow: visible; height: auto;">
+                <div class="tempo-container" id="tempo-visual" style="width: 120px; height: 120px;">
+                    <svg class="circulo-svg" viewBox="-15 -15 190 190">
+                        <circle class="circulo-fundo" cx="80" cy="80" r="70"></circle>
+                        <circle class="circulo-progresso" id="barra-circular" cx="80" cy="80" r="70"></circle>
+                    </svg>
+                    <div class="mascote-logistica" id="boneco" style="font-size: 50px;">☕</div>
+                </div>
+
+                <div class="info-grupo" style="text-align: center; width: 100%;">
+                    <div class="label-status" style="font-size: 1em; letter-spacing: 2px;">Esquadrão em Pausa Ativa:</div>
+                    <div id="grupo-nome" class="nomes-ativos" style="font-size: 2.2em; color: #00f2fe; margin: 15px 0; word-wrap: break-word; line-height: 1.2; display: block;">AGUARDANDO...</div>
+                    <div id="aviso-saida" class="aviso-saida" style="font-size: 1.5em; color: #ff3333;">⚠️ RETORNAR À OPERAÇÃO ⚠️</div>
+                </div>
+            </div>
+            
+            <div id="grid-display" style="display: none;"></div>
+        </div>
+    </div>
+</div>
 
 <audio id="somAlarme" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
 <script>
+    // CONFIGURAÇÃO FIREBASE (Mantida do original)
     const firebaseConfig = {
         apiKey: "AIzaSyAP_R6alrWpn-4KosHhGAxmCaslUnsstms",
         authDomain: "cafe-79569.firebaseapp.com",
@@ -195,127 +289,211 @@
 
     const horariosFixos = ["02:00", "02:10", "02:20", "02:30", "02:40", "02:50", "03:00", "03:10", "03:20", "03:30"];
     let dadosEscala = {}; 
+    let listaFuncionarios = [];
     let audioDesbloqueado = false;
-    let memoriaRelogio = "";
 
-    function toggleTVMode() {
-        if (!document.fullscreenElement) {
-            document.body.classList.add('tv-mode');
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            }
-        } else {
-            document.body.classList.remove('tv-mode');
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(err => console.log(err));
-            }
-        }
-    }
-
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) { document.body.classList.remove('tv-mode'); }
-    });
-
-    document.getElementById("novoNome").addEventListener("keypress", function(e) { if (e.key === "Enter") adicionarNomeManual(); });
-
-    document.body.addEventListener('click', function() {
-        if (!audioDesbloqueado) {
-            const som = document.getElementById('somAlarme');
-            som.volume = 0; som.play().then(() => { som.pause(); som.currentTime = 0; som.volume = 1; audioDesbloqueado = true; }).catch(e => console.log(e));
-        }
-    });
-
+    // INICIALIZAÇÃO
     window.onload = function() {
-        gerarGrid(); carregarDoBanco(); carregarBancoLateral(); 
-        setInterval(atualizarLogica, 1000); 
+        gerarGrids();
+        carregarDados();
+        setInterval(atualizarRelogioELogica, 1000);
+        
+        document.body.addEventListener('click', () => {
+            if (!audioDesbloqueado) {
+                const som = document.getElementById('somAlarme');
+                som.volume = 0; som.play().then(() => { som.pause(); som.currentTime = 0; som.volume = 1; audioDesbloqueado = true; });
+            }
+        });
     };
 
-    function salvarNoBanco() { db.collection("logistica").doc("escalaDeHoje").set(dadosEscala); }
-    function carregarDoBanco() {
+    function switchView(view) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('view-' + view).classList.add('active');
+        event.target.classList.add('active');
+        
+        if(view === 'display') {
+            document.getElementById('nav-bar').style.opacity = "0.1";
+            document.getElementById('nav-bar').addEventListener('mouseenter', () => document.getElementById('nav-bar').style.opacity = "1");
+            document.getElementById('nav-bar').addEventListener('mouseleave', () => document.getElementById('nav-bar').style.opacity = "0.1");
+        } else {
+            document.getElementById('nav-bar').style.opacity = "1";
+        }
+    }
+
+    // FIREBASE SYNC
+    function carregarDados() {
+        // Escala
         db.collection("logistica").doc("escalaDeHoje").onSnapshot((doc) => {
             dadosEscala = doc.exists ? doc.data() : {};
-            horariosFixos.forEach(h => { if(!dadosEscala[h]) dadosEscala[h] = []; renderizarSlot(h); });
+            horariosFixos.forEach(h => { 
+                if(!dadosEscala[h]) dadosEscala[h] = []; 
+                renderizarSlot(h); 
+            });
         });
-    }
-    function salvarBancoLateral() {
-        const nomes = Array.from(document.getElementById('lista-disponiveis').children).map(el => el.innerText);
-        db.collection("logistica").doc("listaLateral").set({ nomes });
-    }
-    function carregarBancoLateral() {
-        db.collection("logistica").doc("listaLateral").get().then((doc) => {
-            if (doc.exists) doc.data().nomes.forEach(nome => adicionarAoPoolDOM(nome));
+        // Lista Lateral
+        db.collection("logistica").doc("listaLateral").onSnapshot((doc) => {
+            if (doc.exists) {
+                listaFuncionarios = doc.data().nomes || [];
+                renderizarPool();
+            }
         });
     }
 
+    function salvarEscala() { db.collection("logistica").doc("escalaDeHoje").set(dadosEscala); }
+    function salvarPool() { db.collection("logistica").doc("listaLateral").set({ nomes: listaFuncionarios }); }
+
+    // GESTÃO DE NOMES
     function adicionarNomeManual() {
-        const input = document.getElementById('novoNome'); const nome = input.value.trim().toUpperCase();
-        if (nome) { adicionarAoPoolDOM(nome); salvarBancoLateral(); input.value = ""; }
+        const input = document.getElementById('novoNome');
+        const nome = input.value.trim().toUpperCase();
+        if (nome) {
+            if (!listaFuncionarios.includes(nome)) {
+                listaFuncionarios.push(nome);
+                salvarPool();
+            }
+            input.value = "";
+        }
     }
-    function adicionarAoPoolDOM(nome) {
+
+    function limparTodosNomes() {
+        if(confirm("Deseja apagar todos os nomes da lista lateral?")) {
+            listaFuncionarios = [];
+            salvarPool();
+        }
+    }
+
+    function removerNome(nome) {
+        listaFuncionarios = listaFuncionarios.filter(n => n !== nome);
+        salvarPool();
+    }
+
+    function renderizarPool() {
         const pool = document.getElementById('lista-disponiveis');
-        if(Array.from(pool.children).some(el => el.innerText === nome)) return;
-        const div = document.createElement('div'); div.className = 'funcionario-item'; div.draggable = true;
-        div.id = 'f-' + Math.random(); div.innerText = nome; div.ondragstart = drag; pool.appendChild(div);
+        pool.innerHTML = '';
+        // Filtrar nomes que já estão na escala para não repetir no pool (opcional, mas limpo)
+        const nomesNaEscala = Object.values(dadosEscala).flat();
+        const disponiveis = listaFuncionarios.filter(n => !nomesNaEscala.includes(n));
+
+        disponiveis.forEach(nome => {
+            const div = document.createElement('div');
+            div.className = 'funcionario-item';
+            div.draggable = true;
+            div.innerHTML = `<span>${nome}</span> <button class="btn-delete-small" onclick="removerNome('${nome}')">×</button>`;
+            div.ondragstart = (ev) => {
+                ev.dataTransfer.setData("nome", nome);
+                ev.dataTransfer.setData("origem", "pool");
+            };
+            pool.appendChild(div);
+        });
     }
-    function gerarGrid() {
-        const grid = document.getElementById('grid-horarios'); grid.innerHTML = '';
-        horariosFixos.forEach(h => { grid.innerHTML += `<div class="slot-horario" id="box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)"><div class="slot-header">🕒 ${h}</div><div class="slot-nomes" id="slot-${h}"></div></div>`; });
-    }
-    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-    document.addEventListener("dragleave", function(ev) { if (ev.target.classList) ev.target.classList.remove('drag-over'); });
-    function drag(ev) { ev.dataTransfer.setData("nome", ev.target.innerText); ev.dataTransfer.setData("origemId", ev.target.id); const pai = ev.target.parentElement; if(pai.id.startsWith('slot-')) ev.dataTransfer.setData("horaOrigem", pai.id.replace('slot-', '')); }
-    function dropNoHorario(ev, hora) {
-        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over'); const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
-        if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); } 
-        else { const el = document.getElementById(ev.dataTransfer.getData("origemId")); if (el) el.remove(); salvarBancoLateral(); }
-        if (!dadosEscala[hora].includes(nome)) { dadosEscala[hora].push(nome); renderizarSlot(hora); salvarNoBanco(); }
-    }
-    function dropNoPool(ev) {
-        ev.preventDefault(); ev.currentTarget.classList.remove('drag-over'); const nome = ev.dataTransfer.getData("nome"); const horaOrigem = ev.dataTransfer.getData("horaOrigem");
-        if (horaOrigem) { dadosEscala[horaOrigem] = dadosEscala[horaOrigem].filter(n => n !== nome); renderizarSlot(horaOrigem); salvarNoBanco(); adicionarAoPoolDOM(nome); salvarBancoLateral(); }
-    }
-    function renderizarSlot(h) {
-        const container = document.getElementById(`slot-${h}`);
-        if(container && dadosEscala[h]) container.innerHTML = dadosEscala[h].map(n => `<span class="nome-tag">${n}</span>`).join('');
-    }
+
     function importarExcel(event) {
         const reader = new FileReader();
         reader.onload = (e) => {
             const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
-            XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1}).forEach(linha => { if(linha[0]) adicionarAoPoolDOM(linha[0]); });
-            salvarBancoLateral(); event.target.value = '';
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
+            
+            rows.forEach(linha => {
+                if(linha[0]) {
+                    const nome = String(linha[0]).trim().toUpperCase();
+                    if(nome && !listaFuncionarios.includes(nome)) {
+                        listaFuncionarios.push(nome);
+                    }
+                }
+            });
+            salvarPool();
+            event.target.value = '';
         };
         reader.readAsArrayBuffer(event.target.files[0]);
     }
 
-    function testarAlerta() {
-        const som = document.getElementById('somAlarme'); som.currentTime = 0; som.play();
-        const visual = document.getElementById('tempo-visual');
-        const nome = document.getElementById('grupo-nome');
-        const boneco = document.getElementById('boneco');
+    // DRAG AND DROP
+    function gerarGrids() {
+        const gridAdmin = document.getElementById('grid-admin');
+        const gridDisplay = document.getElementById('grid-display');
+        gridAdmin.innerHTML = '';
+        gridDisplay.innerHTML = '';
 
-        visual.classList.add('tempo-critico');
-        nome.classList.add('texto-glitch');
-        nome.innerText = "SIMULAÇÃO DE EMERGÊNCIA!";
-        
-        // Troca o boneco e a animação para pânico
-        boneco.innerText = "🏃‍♂️💨";
-        boneco.className = "mascote-logistica mascote-run";
-        
-        setTimeout(() => { 
-            visual.classList.remove('tempo-critico');
-            nome.classList.remove('texto-glitch');
-            boneco.innerText = "📦"; 
-            boneco.className = "mascote-logistica";
-            som.pause(); som.currentTime = 0;
-            atualizarLogica();
-        }, 5000);
+        horariosFixos.forEach(h => {
+            gridAdmin.innerHTML += `
+                <div class="slot-horario" id="admin-box-${h}" ondrop="dropNoHorario(event, '${h}')" ondragover="allowDrop(event)">
+                    <div class="slot-header">🕒 ${h}</div>
+                    <div class="slot-nomes" id="admin-slot-${h}"></div>
+                </div>`;
+            gridDisplay.innerHTML += `
+                <div class="slot-horario" id="display-box-${h}">
+                    <div class="slot-header">🕒 ${h}</div>
+                    <div class="slot-nomes" id="display-slot-${h}"></div>
+                </div>`;
+        });
     }
 
-    function atualizarLogica() {
+    function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+
+    function dropNoHorario(ev, hora) {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('drag-over');
+        const nome = ev.dataTransfer.getData("nome");
+        const origem = ev.dataTransfer.getData("origem"); // 'pool' ou uma hora específica
+
+        // Se veio de outro horário, remove de lá
+        if (origem !== "pool") {
+            dadosEscala[origem] = dadosEscala[origem].filter(n => n !== nome);
+        }
+
+        // Adiciona no novo horário se não for duplicado no mesmo slot
+        if (!dadosEscala[hora].includes(nome)) {
+            dadosEscala[hora].push(nome);
+        }
+        
+        salvarEscala();
+    }
+
+    function dropNoPool(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.remove('drag-over');
+        const nome = ev.dataTransfer.getData("nome");
+        const origem = ev.dataTransfer.getData("origem");
+
+        if (origem !== "pool") {
+            dadosEscala[origem] = dadosEscala[origem].filter(n => n !== nome);
+            salvarEscala();
+        }
+    }
+
+    function removerDaEscala(hora, nome) {
+        dadosEscala[hora] = dadosEscala[hora].filter(n => n !== nome);
+        salvarEscala();
+    }
+
+    function renderizarSlot(h) {
+        const slots = [document.getElementById(`admin-slot-${h}`), document.getElementById(`display-slot-${h}`)];
+        const nomes = dadosEscala[h] || [];
+        
+        slots.forEach((container, idx) => {
+            if(!container) return;
+            container.innerHTML = nomes.map(n => `
+                <span class="nome-tag" draggable="${idx === 0}" ondragstart="startDragFromSlot(event, '${h}', '${n}')">
+                    ${n} ${idx === 0 ? `<button class="btn-remove-tag" onclick="removerDaEscala('${h}', '${n}')">×</button>` : ''}
+                </span>
+            `).join('');
+        });
+        renderizarPool(); // Atualiza pool para esconder quem entrou na escala
+    }
+
+    function startDragFromSlot(ev, hora, nome) {
+        ev.dataTransfer.setData("nome", nome);
+        ev.dataTransfer.setData("origem", hora);
+    }
+
+    // LÓGICA DE TEMPO E ALERTAS
+    function atualizarRelogioELogica() {
         const agora = new Date();
         const horaTexto = agora.toLocaleTimeString();
-        if (horaTexto !== memoriaRelogio) { document.getElementById('clock').innerText = horaTexto; memoriaRelogio = horaTexto; }
+        document.getElementById('clock-admin').innerText = horaTexto;
+        document.getElementById('clock-display').innerText = horaTexto;
 
         const agoraMins = agora.getHours() * 60 + agora.getMinutes();
         let alguemNoCafe = false;
@@ -330,54 +508,42 @@
             const [hora, min] = h.split(':').map(Number);
             const inicio = hora * 60 + min;
             const fim = inicio + 10;
-            const box = document.getElementById(`box-${h}`);
-            if(!box) return;
+            
+            const boxAdmin = document.getElementById(`admin-box-${h}`);
+            const boxDisplay = document.getElementById(`display-box-${h}`);
 
             if (agoraMins >= inicio && agoraMins < fim) {
                 alguemNoCafe = true;
-                box.classList.add('active-row');
+                if(boxAdmin) boxAdmin.classList.add('active-row');
+                if(boxDisplay) boxDisplay.classList.add('active-row');
                 
                 const nomes = (dadosEscala[h] && dadosEscala[h].length > 0) ? dadosEscala[h].join(', ') : "EQUIPE NÃO DEFINIDA";
-                if (!grupoNome.classList.contains('texto-glitch')) grupoNome.innerText = nomes;
+                grupoNome.innerText = nomes;
 
                 let segsPassados = ((agoraMins - inicio) * 60) + agora.getSeconds();
                 let porcentagem = segsPassados / 600; 
                 let offset = 440 - (porcentagem * 440); 
                 barraCircular.style.strokeDashoffset = offset;
 
-                if (agoraMins === fim - 1) { 
-                    // MINUTO FINAL: Pânico
+                if (agoraMins === fim - 1 && agora.getSeconds() > 30) { 
                     visual.classList.add('tempo-critico');
-                    grupoNome.classList.add('texto-glitch');
                     aviso.style.display = "block";
-                    boneco.innerText = "🏃‍♂️💨";
-                    boneco.className = "mascote-logistica mascote-run";
+                    boneco.innerText = "🏃‍♂️";
                     if (agora.getSeconds() % 10 === 0) document.getElementById('somAlarme').play();
-                } else if (agoraMins === inicio && agora.getSeconds() < 15) {
-                    // TRANSIÇÃO (Primeiros 15s): Andando
-                    boneco.innerText = "🚶‍♂️📦"; 
-                    boneco.className = "mascote-logistica mascote-walk";
-                    visual.classList.remove('tempo-critico'); 
-                    grupoNome.classList.remove('texto-glitch'); 
-                    aviso.style.display = "none";
                 } else {
-                    // TEMPO NORMAL: Relax/Café
-                    boneco.innerText = "👷‍♂️☕"; 
-                    boneco.className = "mascote-logistica mascote-relax";
-                    visual.classList.remove('tempo-critico'); 
-                    grupoNome.classList.remove('texto-glitch'); 
+                    visual.classList.remove('tempo-critico');
                     aviso.style.display = "none";
+                    boneco.innerText = "☕";
                 }
             } else {
-                box.classList.remove('active-row');
+                if(boxAdmin) boxAdmin.classList.remove('active-row');
+                if(boxDisplay) boxDisplay.classList.remove('active-row');
             }
         });
 
         if (!alguemNoCafe) {
             grupoNome.innerText = "NENHUMA EQUIPE NO CAFÉ";
-            grupoNome.classList.remove('texto-glitch');
             boneco.innerText = "📦"; 
-            boneco.className = "mascote-logistica mascote-relax";
             aviso.style.display = "none"; 
             visual.classList.remove('tempo-critico');
             barraCircular.style.strokeDashoffset = 440; 
