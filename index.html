@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
 
     <style>
         /* --- ESTILO BASE --- */
@@ -295,13 +296,34 @@
     // INICIALIZAÇÃO
     window.onload = function() {
         gerarGrids();
-        carregarDados();
+        
+        // 1. Tenta fazer o login anônimo silenciosamente
+        firebase.auth().signInAnonymously().catch((error) => {
+            console.error("Erro na autenticação invisível:", error.code, error.message);
+        });
+
+        // 2. Fica escutando o status de autenticação
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                console.log("Acesso autorizado pelo Firebase. Carregando dados da escala...");
+                carregarDados(); // AQUI ESTÁ O SEGREDO: Só chama o banco depois de logado
+            } else {
+                console.log("Aguardando liberação de acesso...");
+            }
+        });
+
         setInterval(atualizarRelogioELogica, 1000);
         
         document.body.addEventListener('click', () => {
             if (!audioDesbloqueado) {
                 const som = document.getElementById('somAlarme');
-                som.volume = 0; som.play().then(() => { som.pause(); som.currentTime = 0; som.volume = 1; audioDesbloqueado = true; });
+                som.volume = 0; 
+                som.play().then(() => { 
+                    som.pause(); 
+                    som.currentTime = 0; 
+                    som.volume = 1; 
+                    audioDesbloqueado = true; 
+                });
             }
         });
     };
